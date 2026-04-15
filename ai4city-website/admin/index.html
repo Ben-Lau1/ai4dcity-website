@@ -1081,8 +1081,16 @@ function serializeTeam() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// PUBLICATIONS
+// PUBLICATIONS — 专用编辑器
+// 字段: id, title, desc(opt), topic, year, date, link,
+//       wechatLink(opt), projectLink(opt), mediaContent(opt)
 // ═══════════════════════════════════════════════════════════════════════════
+const PUB_TOPICS = [
+  'AI based 3D City Modeling',
+  'Spatio-temporal (4D) Data Fusion',
+  'Urban Env-Understanding',
+];
+
 async function loadPublications() {
   const res = await apiGet('/api/parsed/publications');
   if (!res.ok) { toast('解析 publications.js 失败: ' + (res.error||''), 'err'); return; }
@@ -1091,18 +1099,205 @@ async function loadPublications() {
 }
 
 function renderPublications() {
-  renderItemList('publications-body', publicationsData, 'publication');
+  const container = document.getElementById('publications-body');
+  if (!publicationsData || !publicationsData.length) {
+    container.innerHTML = '<div style="color:var(--muted);padding:20px">暂无数据，点击「+ 新增论文」添加</div>';
+    return;
+  }
+  container.innerHTML = publicationsData.map((item, idx) => {
+    const imgVal = item.mediaContent || '';
+    const imgPreview = imgVal
+      ? `<img src="${API}${imgVal}" style="height:44px;width:auto;border-radius:4px;object-fit:cover;border:1px solid var(--border);margin-left:6px;flex-shrink:0" onerror="this.style.display='none'">`
+      : '';
+    const wechatBadge = item.wechatLink
+      ? `<span style="font-size:10px;padding:1px 7px;border-radius:10px;background:rgba(22,163,74,0.15);color:#4ade80;border:1px solid rgba(22,163,74,0.3)">微信 ✓</span>`
+      : '';
+    const projBadge = item.projectLink
+      ? `<span style="font-size:10px;padding:1px 7px;border-radius:10px;background:rgba(79,140,255,0.15);color:var(--accent);border:1px solid rgba(79,140,255,0.3)">主页 ✓</span>`
+      : '';
+    return `
+    <div class="body-block" style="margin-bottom:10px">
+      <div class="body-block-header">
+        <span class="block-type" style="font-size:10px">#${item.id}</span>
+        <span style="margin-left:8px;font-size:12px;color:var(--text);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(item.title||'(无标题)')}</span>
+        <div style="display:flex;gap:4px;align-items:center;margin-right:6px">${wechatBadge}${projBadge}</div>
+        <div class="block-actions">
+          <button class="block-btn" onclick="movePub(${idx},-1)">↑</button>
+          <button class="block-btn" onclick="movePub(${idx},1)">↓</button>
+          <button class="block-btn" style="color:var(--red)" onclick="deletePub(${idx})">✕</button>
+        </div>
+      </div>
+      <div class="body-block-content">
+        <div class="form-editor">
+
+          <div class="form-group">
+            <label>论文标题 Title</label>
+            <input value="${escAttr(item.title||'')}" onchange="updatePub(${idx},'title',this.value)">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group" style="flex:0 0 300px">
+              <label>研究方向 Topic</label>
+              <select onchange="updatePub(${idx},'topic',this.value)"
+                style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;padding:8px 10px;outline:none;cursor:pointer;width:100%">
+                <option value="">— 请选择 —</option>
+                ${PUB_TOPICS.map(t => `<option value="${t}"${item.topic===t?' selected':''}>${t}</option>`).join('')}
+              </select>
+            </div>
+            <div class="form-group" style="flex:0 0 90px">
+              <label>年份 Year</label>
+              <input value="${escAttr(String(item.year||''))}"
+                onchange="updatePub(${idx},'year',this.value.trim())" placeholder="2026">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>摘要 Abstract <span style="color:var(--muted);font-size:9px;font-weight:400;text-transform:none">（选填）</span></label>
+            <textarea onchange="updatePub(${idx},'desc',this.value)" style="min-height:65px">${escHtml(item.desc||'')}</textarea>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:8px;margin:4px 0">
+            <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted)">🔗 链接</span>
+            <div style="flex:1;height:1px;background:var(--border)"></div>
+          </div>
+
+          <div class="form-group">
+            <label>DOI / 论文主链接
+              <span style="margin-left:6px;font-size:9px;font-weight:400;text-transform:none;padding:1px 7px;border-radius:8px;background:rgba(79,140,255,0.15);color:var(--accent)">整张卡片点击跳转</span>
+            </label>
+            <input value="${escAttr(item.link||'')}"
+              onchange="updatePub(${idx},'link',this.value)" placeholder="https://doi.org/10.xxxx/...">
+          </div>
+
+          <div class="form-group">
+            <label>期刊/会议 Venue <span style="color:var(--muted);font-size:9px;font-weight:400;text-transform:none">（卡片底部灰色小字）</span></label>
+            <input value="${escAttr(item.date||'')}"
+              onchange="updatePub(${idx},'date',this.value)" placeholder="CVPR 2026. DOI: 10.xxxx/...">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>
+                <span style="display:inline-block;width:8px;height:8px;background:#16a34a;border-radius:2px;margin-right:4px;vertical-align:middle"></span>
+                微信推文链接 <span style="color:var(--muted);font-size:9px;font-weight:400;text-transform:none">（选填）</span>
+              </label>
+              <input value="${escAttr(item.wechatLink||'')}"
+                onchange="updatePub(${idx},'wechatLink',this.value)" placeholder="https://mp.weixin.qq.com/s/...">
+            </div>
+            <div class="form-group">
+              <label>
+                <span style="display:inline-block;width:8px;height:8px;background:#4f8cff;border-radius:2px;margin-right:4px;vertical-align:middle"></span>
+                项目主页 Project Link <span style="color:var(--muted);font-size:9px;font-weight:400;text-transform:none">（选填）</span>
+              </label>
+              <input value="${escAttr(item.projectLink||'')}"
+                onchange="updatePub(${idx},'projectLink',this.value)" placeholder="https://ai4city-hkust.github.io/...">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>论文配图 Figure <span style="color:var(--muted);font-size:9px;font-weight:400;text-transform:none">（选填）</span></label>
+            <div style="display:flex;gap:6px;align-items:center">
+              <input id="pubimg-${idx}" value="${escAttr(imgVal)}"
+                onchange="updatePub(${idx},'mediaContent',this.value);refreshPubImgPreview(${idx},this.value)"
+                placeholder="/images/publication/xxx.png" style="flex:1">
+              <button class="btn btn-ghost" style="padding:5px 10px;font-size:12px;flex-shrink:0"
+                onclick="openPubImgPicker(${idx})">🖼 浏览</button>
+              ${imgPreview}
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>`;
+  }).join('');
 }
-function newPublication() {
-  publicationsData.unshift({ id: Date.now(), title:'新论文', desc:'', mediaType:'image', mediaContent:'', link:'', date:'', topic:'', year: String(new Date().getFullYear()) });
+
+function updatePub(idx, field, value) { publicationsData[idx][field] = value; }
+
+function movePub(idx, dir) {
+  const ni = idx + dir;
+  if (ni < 0 || ni >= publicationsData.length) return;
+  [publicationsData[idx], publicationsData[ni]] = [publicationsData[ni], publicationsData[idx]];
   renderPublications();
 }
+
+function deletePub(idx) {
+  if (!confirm('确认删除该论文？')) return;
+  publicationsData.splice(idx, 1);
+  renderPublications();
+}
+
+function refreshPubImgPreview(idx, path) {
+  const inp = document.getElementById(`pubimg-${idx}`);
+  if (!inp) return;
+  const wrap = inp.closest('div');
+  let img = wrap.querySelector('img');
+  if (path) {
+    if (!img) {
+      img = document.createElement('img');
+      img.style.cssText = 'height:44px;width:auto;border-radius:4px;object-fit:cover;border:1px solid var(--border);margin-left:6px;flex-shrink:0';
+      img.onerror = () => { img.style.display = 'none'; };
+      wrap.appendChild(img);
+    }
+    img.src = API + path; img.style.display = '';
+  } else if (img) { img.style.display = 'none'; }
+}
+
+function openPubImgPicker(idx) {
+  _pickerTarget = { type: '__pub__', idx };
+  _pickerFolder = 'publication';
+  document.getElementById('picker-modal').style.display = 'flex';
+  renderPickerFolderTabs();
+  loadPickerMedia(_pickerFolder);
+}
+
+function newPublication() {
+  publicationsData.unshift({
+    id: Date.now(), title: '新论文', topic: '',
+    year: String(new Date().getFullYear()), date: '', link: '',
+  });
+  renderPublications();
+  toast('已创建新论文条目，请填写后保存', 'info');
+}
+
 async function savePublications() {
-  const content = serializeItemList('PUBLICATION_ITEMS', publicationsData);
+  const content = serializePubs();
   await apiPost('/api/data/publications', { content });
   const raw = document.getElementById('raw-wrap-publications');
   if (raw) delete raw.dataset.loaded;
   toast('✅ publications.js 已保存', 'ok');
+}
+
+function serializePubs() {
+  const FIELD_ORDER = ['id','title','desc','topic','year','date','link','wechatLink','projectLink','mediaContent'];
+  const OPTIONAL    = new Set(['desc','wechatLink','projectLink','mediaContent']);
+  const STRIP       = new Set(['mediaType','img','paperLink','codeLink','demoLink','articleId','venue','subtitle']);
+  const items = publicationsData.map(item => {
+    const clean = {};
+    FIELD_ORDER.forEach(k => {
+      if (STRIP.has(k)) return;
+      const v = item[k];
+      if (v === undefined || v === null) return;
+      if (OPTIONAL.has(k) && (v === '' || v === null)) return;
+      clean[k] = k === 'year' ? String(v) : v;
+    });
+    Object.keys(item).sort().forEach(k => {
+      if (!STRIP.has(k) && clean[k] === undefined && item[k] !== undefined) clean[k] = item[k];
+    });
+    const fields = Object.entries(clean).map(([k,v]) => `    ${k}: ${JSON.stringify(v)}`).join(',\n');
+    return `  {\n${fields}\n  }`;
+  }).join(',\n');
+  return [
+    '// src/data/publications.js',
+    '//',
+    '// Fields: id, title, desc(opt), topic, year, date, link,',
+    '//         wechatLink(opt), projectLink(opt), mediaContent(opt)',
+    '',
+    'export const PUBLICATION_ITEMS = [',
+    items,
+    '];',
+    '',
+  ].join('\n');
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1458,6 +1653,18 @@ async function loadPickerMedia(folder) {
 function pickMedia(path) {
   if (!_pickerTarget) return;
   const { type, idx } = _pickerTarget;
+
+  // ── Publications 专用图片选择 ──
+  if (type === '__pub__') {
+    publicationsData[idx].mediaContent = path;
+    const inp = document.getElementById(`pubimg-${idx}`);
+    if (inp) inp.value = path;
+    refreshPubImgPreview(idx, path);
+    closeMediaPicker();
+    toast('✅ 已选择: ' + path, 'ok');
+    return;
+  }
+
   // Update data
   const item = getDataArray(type)[idx];
   item.mediaContent = path;

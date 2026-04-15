@@ -32,21 +32,6 @@ export const AboutPage = (originPage = 'home') => {
                                 </p>
                                 </div>
                                 <div>
-                                <h2 className="text-3xl font-bold text-gray-900 mb-4">
-                                  <a 
-                                    href="https://www.hkust-gz.edu.cn/academics/hubs-and-thrust-areas/society-hub/" 
-                                    target="_blank" 
-                                    rel="noreferrer" 
-                                    className="hover:text-blue-600 transition-colors"
-                                >
-                                    The Society Hub
-                                </a>
-                                </h2>
-                                <p>
-                                    The Society Hub is one of the four academic hubs at HKUST (Guangzhou). It observes social development dynamics, actively aligns with national development strategies, and responds to market demands by providing policy and institutional innovation solutions.
-                                </p>
-                                </div>
-                                <div>
                                 <h2 className="text-3xl font-bold text-gray-900 mb-4">AI 4D City (AI4CITY) Lab</h2>
                                 <p>
                                     4D refers to 3D space plus time series modeling. As the type and density of the remote sensing data continue to grow exponentially, 

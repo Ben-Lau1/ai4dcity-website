@@ -33,28 +33,6 @@ export const RESOURCES_LIST_ITEMS = [
     resourceType: "Dataset"
   },
   {
-    id: 2026100,
-    title: "GlobalBuildingMap: Global 3m-Resolution Building Footprint Dataset",
-    desc: "GlobalBuildingMap (GBM) is the highest-resolution and most accurate global building map to date, generated from nearly 800,000 satellite images using a deep learning pipeline. It covers all continents except Antarctica and is the only source that covers the most populous regions of East Asia. The dataset is available under CC-BY-4.0 on mediaTUM, and the full training and inference code is released under MIT licence on GitHub.",
-    mediaType: "image",
-    mediaContent: "/images/publication/cairo.png",
-    link: "https://github.com/zhu-xlab/GlobalBuildingMap",
-    date: "Scientific Data 13, 71 (2026). DOI: 10.14459/2024MP1764505.002",
-    year: "2026",
-    resourceType: "Dataset"
-  },
-  {
-    id: 2026101,
-    title: "Guide to Open Urban Data in Singapore",
-    desc: "A comprehensive and regularly updated index of open urban datasets for Singapore, maintained by the Urban Analytics Lab at NUS. Covers building and housing data, addresses, real estate transactions, demographics, energy, transportation, geospatial data, street-level imagery, environment, biodiversity, and more. Useful for both researchers new to Singapore data and experienced urban data scientists.",
-    mediaType: "image",
-    mediaContent: "/images/resource/ScreenShot_2026-04-07_165530_020.png",
-    link: "https://ual.sg/project/open-urban-data-singapore/",
-    date: "Urban Analytics Lab, NUS. Last updated March 2026.",
-    year: "2026",
-    resourceType: "Dataset"
-  },
-  {
     id: 6,
     title: "MeTreec v1.0",
     desc: "MeTreec is a \"one-stop\" processing pipeline designed for individual tree point clouds:\nIt receives segmented individual tree point clouds (.xyz format, Z-axis oriented upwards), calls AdTree (Du et al., 2019) to complete the 3D reconstruction, and subsequently performs mesh repair (hole filling) based on CGAL. It then calculates key tree metrics—such as Tree Height, Diameter at Breast Height (DBH), Crown Radius (CR), Crown Depth (CD), and Volume/Surface Area—from the skeleton or filtered leaf nodes. Simultaneously, it outputs a single JSON report and a batch CSV summary file.",
