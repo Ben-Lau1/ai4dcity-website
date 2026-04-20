@@ -1,6 +1,38 @@
 // src/data/articles.js
 
 export const ARTICLE_CONTENT = {
+  "seminar": {
+    title: "SCIISummit 2026 Held at HKUST (Guangzhou): Towards Human-Machine Co-existence Social Computing",
+    subtitle: "",
+    date: "April 17, 2026",
+    site: "HKUST (Guangzhou)",
+    author: "AI4City Lab",
+    img: "",
+    abstract: "The 6th CAAI Social Computing and Social Intelligence Interdisciplinary Strategy Summit (SCIISummit 2026) was hosted at HKUST (Guangzhou), themed around human-machine co-existence in social computing.",
+    body: [
+
+    ],
+    link: "https://mp.weixin.qq.com/s/l5IqXpUe1VED6z9Vp7Xrsw?scene=1&click_id=4",
+    details: [
+
+    ]
+  },
+  "article-1776407630240": {
+    title: "How Maps Influence User Cognition, Understanding, and Behavior",
+    subtitle: "",
+    date: "March 26, 2026",
+    site: "W1-201",
+    author: "AI4City Lab",
+    img: "images/seminar/6407.png",
+    abstract: "",
+    body: [
+      "With the advancement of information access and display technologies, the presentation of digital maps is expanding from traditional two-dimensional screens into mixed (virtual) reality environments. Different display technologies have introduced new ways of interacting with maps, making the influence of maps on user cognition and behavior increasingly complex. At the same time, the application scenarios of maps continue to broaden — from traditional wayfinding and navigation to information dissemination, sports analysis, and beyond.\nThis talk takes a user-centered perspective and examines four application scenarios to explore how maps influence user cognition, understanding, and behavior. The report will introduce how user research methods — including eye tracking, think-aloud protocols, mixed reality experiments, and questionnaire surveys — are used to analyze the effects of different map presentations and interaction modes on users' information comprehension, spatial learning, decision-making processes, and behavioral performance."
+    ],
+    link: "",
+    details: [
+
+    ]
+  },
   "asprs-award": {
     title: "Professor Wufan Zhao Honored with the 2025 OutstandingReviewer for PE&RS",
     subtitle: "In recognition of outstanding contributions to the peer review process of Photogrammetric Engineering & Remote Sensing (PE&RS) during 2025.",
@@ -210,22 +242,6 @@ export const ARTICLE_CONTENT = {
     abstract: "Join us at the UGOD Summer AI Symposium",
     body: [
 
-    ],
-    link: "",
-    details: [
-
-    ]
-  },
-  "seminar": {
-    title: "How Maps Influence User Cognition, Understanding, and Behavior",
-    subtitle: "",
-    date: "March 26, 2026",
-    site: "W1-201",
-    author: "AI4City Lab",
-    img: "images/seminar/6407.png",
-    abstract: "",
-    body: [
-      "With the advancement of information access and display technologies, the presentation of digital maps is expanding from traditional two-dimensional screens into mixed (virtual) reality environments. Different display technologies have introduced new ways of interacting with maps, making the influence of maps on user cognition and behavior increasingly complex. At the same time, the application scenarios of maps continue to broaden — from traditional wayfinding and navigation to information dissemination, sports analysis, and beyond.\nThis talk takes a user-centered perspective and examines four application scenarios to explore how maps influence user cognition, understanding, and behavior. The report will introduce how user research methods — including eye tracking, think-aloud protocols, mixed reality experiments, and questionnaire surveys — are used to analyze the effects of different map presentations and interaction modes on users' information comprehension, spatial learning, decision-making processes, and behavioral performance."
     ],
     link: "",
     details: [

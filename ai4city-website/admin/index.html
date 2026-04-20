@@ -1179,7 +1179,7 @@ function renderPublications() {
             <div class="form-group">
               <label>
                 <span style="display:inline-block;width:8px;height:8px;background:#16a34a;border-radius:2px;margin-right:4px;vertical-align:middle"></span>
-                微信推文链接 <span style="color:var(--muted);font-size:9px;font-weight:400;text-transform:none">（选填）</span>
+                Wechat Post链接 <span style="color:var(--muted);font-size:9px;font-weight:400;text-transform:none">（选填）</span>
               </label>
               <input value="${escAttr(item.wechatLink||'')}"
                 onchange="updatePub(${idx},'wechatLink',this.value)" placeholder="https://mp.weixin.qq.com/s/...">
@@ -1187,7 +1187,7 @@ function renderPublications() {
             <div class="form-group">
               <label>
                 <span style="display:inline-block;width:8px;height:8px;background:#4f8cff;border-radius:2px;margin-right:4px;vertical-align:middle"></span>
-                项目主页 Project Link <span style="color:var(--muted);font-size:9px;font-weight:400;text-transform:none">（选填）</span>
+                Project Page Project Link <span style="color:var(--muted);font-size:9px;font-weight:400;text-transform:none">（选填）</span>
               </label>
               <input value="${escAttr(item.projectLink||'')}"
                 onchange="updatePub(${idx},'projectLink',this.value)" placeholder="https://ai4city-hkust.github.io/...">

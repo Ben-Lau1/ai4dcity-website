@@ -27,8 +27,8 @@ export const AboutPage = (originPage = 'home') => {
                                     HKUST (Guangzhou) Introduction
                                 </a>
                                 </h2> 
-                                <p> HKUST (Guangzhou) Introduction
-                                    Hong Kong University of Science and Technology (Guangzhou) is a cooperation university between the Mainland and Hong Kong approved by the Ministry of Education. It was formally established in June 2022. HKUST (Guangzhou) is committed to innovation, featuring interdisciplinary development, and exploring innovative talent cultivation models. Its mission is to become a paradigm for the integration and development of Mainland and Hong Kong education and an internationally renowned, high-level university dedicated to cultivating high-level, innovative talents for the future.
+                                <p> 
+                                    <a href="https://www.hkust-gz.edu.cn/" target="_blank" rel="noreferrer" className="underline hover:text-blue-600 font-bold">Hong Kong University of Science and Technology (Guangzhou) </a>is a cooperation university between the Mainland and Hong Kong approved by the Ministry of Education. It was formally established in June 2022. HKUST (Guangzhou) is committed to innovation, featuring interdisciplinary development, and exploring innovative talent cultivation models. Its mission is to become a paradigm for the integration and development of Mainland and Hong Kong education and an internationally renowned, high-level university dedicated to cultivating high-level, innovative talents for the future.
                                 </p>
                                 </div>
                                 <div>

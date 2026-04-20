@@ -41,19 +41,30 @@ export const HomePage = ({
               AI4CITY LAB
             </h1>
             
-            {ARTICLE_CONTENT['seminar'] && (
-              <div 
-                className="cursor-pointer transition group max-w-3xl" 
-                onClick={() => setPage('article', 'seminar')}
-              > 
-                <h2 className="text-xl md:text-2xl font-bold mb-2 text-white">Upcoming Seminar</h2>
-                <p className="text-lg md:text-xl font-medium leading-snug">{ARTICLE_CONTENT['seminar'].title}</p>
-                <div className="flex items-center gap-4 mt-4 text-sm text-gray-300">
-                  <span className="flex items-center gap-2"><Calendar size={16}/> {ARTICLE_CONTENT['seminar'].date}</span>
-                  <span className="flex items-center gap-2"><Clock size={16}/> {ARTICLE_CONTENT['seminar'].site || 'HKUST(GZ)'}</span>
+            {ARTICLE_CONTENT['seminar'] && (() => {
+              const s = ARTICLE_CONTENT['seminar'];
+              const hasExternal = s.link && s.link.trim();
+              const hasInternal = s.body && s.body.length > 0;
+              const canClick = hasExternal || hasInternal;
+
+              return (
+                <div
+                  className={`transition group max-w-3xl ${canClick ? 'cursor-pointer' : 'cursor-default'}`}
+                  onClick={() => {
+                    if (!canClick) return;
+                    if (hasExternal) window.open(s.link, '_blank');
+                    else setPage('article', 'seminar');
+                  }}
+                >
+                  <h2 className="text-xl md:text-2xl font-bold mb-2 text-white">Upcoming Event</h2>
+                  <p className="text-lg md:text-xl font-medium leading-snug">{s.title}</p>
+                  <div className="flex items-center gap-4 mt-4 text-sm text-gray-300">
+                    <span className="flex items-center gap-2"><Calendar size={16}/> {s.date}</span>
+                    <span className="flex items-center gap-2"><Clock size={16}/> {s.site || 'HKUST(GZ)'}</span>
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
           </FadeInSection>
         </div>
       </div>

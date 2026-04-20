@@ -1,21 +1,18 @@
 // src/data/publications.js
 //
-// 字段说明（字段顺序即显示规范）：
-//   id            — 唯一数字 ID
-//   title         — 论文标题
-//   desc          — 摘要 / 简介（选填，留空则卡片不显示）
-//   topic         — 研究方向，必须精确匹配以下三个值之一：
-//                     "AI based 3D City Modeling"
-//                     "Spatio-temporal (4D) Data Fusion"
-//                     "Urban Env-Understanding"
-//   year          — 四位年份字符串，如 "2026"
-//   date          — 期刊/会议 + DOI 显示文字（卡片底部灰色小字）
-//   link          — DOI 或论文主链接（整张卡片点击跳转，选填）
-//   wechatLink    — 微信公众号推文链接（选填，有则在卡片底部显示绿色标签）
-//   projectLink   — 项目主页链接（选填，有则在卡片底部显示蓝色标签）
-//   mediaContent  — 论文配图路径（选填，如 /images/publication/xxx.png）
+// Fields: id, title, desc(opt), topic, year, date, link,
+//         wechatLink(opt), projectLink(opt), mediaContent(opt)
 
 export const PUBLICATION_ITEMS = [
+  {
+    id: 1776654603298,
+    title: "BuildingComSSSM: Building point cloud completion with Geometry-Aware Mambas",
+    desc: "BuildingComSSSM introduces geometry-aware Mamba modules to capture geometric structural information of sparse point clouds. Moreover, the key point generation module guided by the attention mechanism is constructed to strengthen the bidirectional modeling capabilities while generating complete key points. ",
+    topic: "AI based 3D City Modeling",
+    year: "2026",
+    date: "International Journal of Applied Earth Observation and Geoinformation",
+    link: "https://doi.org/10.1016/j.jag.2026.105269"
+  },
   {
     id: 2026001,
     title: "Causal Discovery in Urban Data with Temporal Empirical Dynamic Modeling: The R Package tEDM",
@@ -23,7 +20,7 @@ export const PUBLICATION_ITEMS = [
     topic: "Spatio-temporal (4D) Data Fusion",
     year: "2026",
     date: "Computers, Environment and Urban Systems (CEUS), 2026",
-    link: "https://www.sciencedirect.com/science/article/abs/pii/S0198971526000372",
+    link: "https://www.sciencedirect.com/science/article/abs/pii/S0198971526000372"
   },
   {
     id: 2026002,
@@ -32,14 +29,14 @@ export const PUBLICATION_ITEMS = [
     topic: "Urban Env-Understanding",
     year: "2026",
     date: "International Journal of Geographical Information Science (IJGIS), 2026. DOI: 10.1080/13658816.2026.2640612",
-    link: "http://dx.doi.org/10.1080/13658816.2026.2640612",
+    link: "http://dx.doi.org/10.1080/13658816.2026.2640612"
   },
   {
     id: 2026003,
     title: "UniD-Shift: Towards Unified Semantic Segmentation via Interpretable Shared–Private Multimodal Decomposition",
     topic: "Spatio-temporal (4D) Data Fusion",
     year: "2026",
-    date: "CVPR Findings 2026",
+    date: "CVPR Findings 2026"
   },
   {
     id: 2026004,
@@ -50,7 +47,7 @@ export const PUBLICATION_ITEMS = [
     date: "CVPR 2026. arXiv:2602.23645",
     link: "http://arxiv.org/abs/2602.23645",
     projectLink: "https://ai4city-hkust.github.io/BuildAnyPoint/",
-    mediaContent: "/images/research/BAP.png",
+    mediaContent: "/images/research/BAP.png"
   },
   {
     id: 2026005,
@@ -60,14 +57,14 @@ export const PUBLICATION_ITEMS = [
     year: "2026",
     date: "CVPR 2026. arXiv:2603.02522",
     link: "https://arxiv.org/abs/2603.02522",
-    mediaContent: "/images/publication/NeighborMAE.png",
+    mediaContent: "/images/publication/NeighborMAE.png"
   },
   {
     id: 2026006,
     title: "Rsc-CoT: Visual-CoT Reasoning and Reinforced Optimization for Remote Sensing Change Captioning",
     topic: "Spatio-temporal (4D) Data Fusion",
     year: "2026",
-    date: "ICASSP 2026",
+    date: "ICASSP 2026"
   },
   {
     id: 1774848683155,
@@ -77,7 +74,7 @@ export const PUBLICATION_ITEMS = [
     year: "2026",
     date: "GIScience & Remote Sensing, 2026. DOI: 10.1080/15481603.2026.2623327",
     link: "https://doi.org/10.1080/15481603.2026.2623327",
-    mediaContent: "/images/publication/DWQ.png",
+    mediaContent: "/images/publication/DWQ.png"
   },
   {
     id: 1774775739519,
@@ -87,7 +84,7 @@ export const PUBLICATION_ITEMS = [
     year: "2026",
     date: "IEEE TGRS, 2026. DOI: 10.1109/TGRS.2026.3669158",
     link: "https://doi.org/10.1109/TGRS.2026.3669158",
-    mediaContent: "/images/publication/DSTI.png",
+    mediaContent: "/images/publication/DSTI.png"
   },
   {
     id: 1774848031951,
@@ -97,7 +94,7 @@ export const PUBLICATION_ITEMS = [
     year: "2026",
     date: "ICLR 2026",
     link: "https://github.com/Anthony-ECPKN/SkyEvent",
-    mediaContent: "/images/publication/SKYEVEN.png",
+    mediaContent: "/images/publication/SKYEVEN.png"
   },
   {
     id: 1774779504458,
@@ -107,7 +104,7 @@ export const PUBLICATION_ITEMS = [
     year: "2026",
     date: "International Journal of Applied Earth Observation and Geoinformation (JAG), 2026. DOI: 10.1016/j.jag.2025.105034",
     link: "https://doi.org/10.1016/j.jag.2025.105034",
-    mediaContent: "/images/publication/微信图片_2026-03-29_181922_037.png",
+    mediaContent: "/images/publication/微信图片_2026-03-29_181922_037.png"
   },
   {
     id: 4,
@@ -118,7 +115,7 @@ export const PUBLICATION_ITEMS = [
     date: "ISPRS Journal of Photogrammetry and Remote Sensing, 2025. DOI: 10.1016/j.isprsjprs.2025.10.008",
     link: "https://doi.org/10.1016/j.isprsjprs.2025.10.008",
     wechatLink: "https://mp.weixin.qq.com/s/aNZjGcmorOJKLHZeelAmtw",
-    mediaContent: "/images/research/USLR-GS/1-s2.0-S092427162500396X-gr19.jpg",
+    mediaContent: "/images/research/USLR-GS/1-s2.0-S092427162500396X-gr19.jpg"
   },
   {
     id: 6,
@@ -128,7 +125,7 @@ export const PUBLICATION_ITEMS = [
     year: "2026",
     date: "ISPRS Journal of Photogrammetry and Remote Sensing, 2026. DOI: 10.1016/j.isprsjprs.2025.10.035",
     link: "https://doi.org/10.1016/j.isprsjprs.2025.10.035",
-    mediaContent: "/images/publication/dual-domain.png",
+    mediaContent: "/images/publication/dual-domain.png"
   },
   {
     id: 2,
@@ -139,7 +136,7 @@ export const PUBLICATION_ITEMS = [
     date: "IEEE Transactions on Geoscience and Remote Sensing (TGRS), 2025. DOI: 10.1109/TGRS.2025.3564820",
     link: "https://doi.org/10.1109/TGRS.2025.3564820",
     wechatLink: "https://mp.weixin.qq.com/s/JEKPHoqYUTONDszWnLk1uQ",
-    mediaContent: "/images/research/D2E.png",
+    mediaContent: "/images/research/D2E.png"
   },
   {
     id: 33,
@@ -149,7 +146,7 @@ export const PUBLICATION_ITEMS = [
     year: "2025",
     date: "Transactions in GIS (TGIS), 2025. DOI: 10.1111/tgis.70032",
     link: "https://doi.org/10.1111/tgis.70032",
-    mediaContent: "/images/research/gdverse.png",
+    mediaContent: "/images/research/gdverse.png"
   },
   {
     id: 3,
@@ -161,14 +158,14 @@ export const PUBLICATION_ITEMS = [
     link: "https://doi.org/10.48550/arXiv.2507.04403",
     wechatLink: "https://mp.weixin.qq.com/s/Kl8IiA1A_vgr0P1F-yr30Q",
     projectLink: "https://ai4city-hkust.github.io/Sat2City/",
-    mediaContent: "/images/research/s2c2.png",
+    mediaContent: "/images/research/s2c2.png"
   },
   {
     id: 2025001,
     title: "From Visual Perception to Behavioral Insights: A Comprehensive Workflow for Collecting and Processing Human-Building Interaction Data",
     topic: "Urban Env-Understanding",
     year: "2025",
-    date: "Computational Urban Planning and Urban Management (CUPUM) 2025",
+    date: "Computational Urban Planning and Urban Management (CUPUM) 2025"
   },
   {
     id: 2025002,
@@ -177,7 +174,7 @@ export const PUBLICATION_ITEMS = [
     topic: "Spatio-temporal (4D) Data Fusion",
     year: "2025",
     date: "IGARSS 2025. DOI: 10.1109/IGARSS55030.2025.11242946",
-    link: "https://doi.org/10.1109/IGARSS55030.2025.11242946",
+    link: "https://doi.org/10.1109/IGARSS55030.2025.11242946"
   },
   {
     id: 2025003,
@@ -186,7 +183,7 @@ export const PUBLICATION_ITEMS = [
     topic: "Urban Env-Understanding",
     year: "2025",
     date: "IGARSS 2025. DOI: 10.1109/IGARSS55030.2025.11243018",
-    link: "https://doi.org/10.1109/IGARSS55030.2025.11243018",
+    link: "https://doi.org/10.1109/IGARSS55030.2025.11243018"
   },
   {
     id: 1,
@@ -196,6 +193,6 @@ export const PUBLICATION_ITEMS = [
     year: "2025",
     date: "International Conference on Spatial Data and Intelligence, Springer, 2025. DOI: 10.1007/978-981-95-3102-8_1",
     link: "https://doi.org/10.1007/978-981-95-3102-8_1",
-    mediaContent: "/images/publication/BV.png",
-  },
+    mediaContent: "/images/publication/BV.png"
+  }
 ];
