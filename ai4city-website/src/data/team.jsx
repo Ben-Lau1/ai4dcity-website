@@ -28,7 +28,7 @@ export const TEAM_DATA = {
   // 3. 博士生 (Ph.D. Students)
   phd: [
     { name: "Tongyan Hua", role: "3D city reconstruction, NeRF and SLAM", email: "thua388@connect.hkust-gz.edu.cn", homepage: "https://thua919.github.io/", img: "/images/people/TongyanHua.png" },
-    { name: "Shuai Zhang", role: "Point cloud processing and foundation model", email: "shuaizhang2@hkust-gz.edu.cn", homepage: "https://www.researchgate.net/profile/Shuai-Zhang-194/research", img: "/images/people/ShuaiZhang.png" },
+    { name: "Shuai Zhang", role: "Point cloud processing and foundation model", email: "shuaizhang2@hkust-gz.edu.cn", homepage: "http://shuaizhang-hkust.cn/", img: "/images/people/ShuaiZhang.png" },
     { name: "Jing Ou", role: "3D vision，3D city localization and reconstruction", email: "jingou714@gmail.com", homepage: "", img: "/images/people/OuJing.png" },
     { name: "Liwei Zou", role: "Multimodal data mining, Disaster analysis, Urban resilience", email: "zou.liwei.levi@gmail.com", homepage: "", img: "/images/people/zouliwei.jpg" },
     { name: "Dongli Wu", role: "Generative 3D Modeling", email: "annikeroseling@gmail.com", homepage: "", img: "/images/people/wudongli.jpg" }
