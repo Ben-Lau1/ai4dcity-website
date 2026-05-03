@@ -5,13 +5,25 @@
 
 export const PUBLICATION_ITEMS = [
   {
+    id: "geoidentity-sat2street",
+    title: "Bridging street view coverage disparities through geographic identity preserving generation from satellite view",
+    desc: "Street view imagery (SVI) provides a human-centric view of urban environments, but its coverage is highly uneven. We propose GeoIdentity-Sat2Street, a geographic identity preserving framework that leverages satellite imagery to expand street view coverage.",
+    topic: "Urban Env-Understanding",
+    year: "2026",
+    date: "ISPRS Journal of Photogrammetry and Remote Sensing, 2026. DOI: 10.1016/j.isprsjprs.2026.03.049",
+    link: "https://doi.org/10.1016/j.isprsjprs.2026.03.049",
+    projectLink: "https://github.com/ai4city-hkust/GeoIdentity-Sat2Street",
+    mediaContent: "/images/research/GeoIdentity-Sat2Street.jpg"
+  },
+  {
     id: 1776654603298,
     title: "BuildingComSSSM: Building point cloud completion with Geometry-Aware Mambas",
     desc: "BuildingComSSSM introduces geometry-aware Mamba modules to capture geometric structural information of sparse point clouds. Moreover, the key point generation module guided by the attention mechanism is constructed to strengthen the bidirectional modeling capabilities while generating complete key points. ",
     topic: "AI based 3D City Modeling",
     year: "2026",
     date: "International Journal of Applied Earth Observation and Geoinformation",
-    link: "https://doi.org/10.1016/j.jag.2026.105269"
+    link: "https://doi.org/10.1016/j.jag.2026.105269",
+    wechatLink: "https://mp.weixin.qq.com/s/M12tUYcQkSU4IkQ4wzvlFA"
   },
   {
     id: 2026001,
@@ -20,7 +32,9 @@ export const PUBLICATION_ITEMS = [
     topic: "Spatio-temporal (4D) Data Fusion",
     year: "2026",
     date: "Computers, Environment and Urban Systems (CEUS), 2026",
-    link: "https://www.sciencedirect.com/science/article/abs/pii/S0198971526000372"
+    link: "https://www.sciencedirect.com/science/article/abs/pii/S0198971526000372",
+    wechatLink: "https://mp.weixin.qq.com/s/cJvXLKKeYlZ7z1mDOvs3ww",
+    projectLink: "https://github.com/stscl/tEDM"
   },
   {
     id: 2026002,
@@ -29,14 +43,17 @@ export const PUBLICATION_ITEMS = [
     topic: "Urban Env-Understanding",
     year: "2026",
     date: "International Journal of Geographical Information Science (IJGIS), 2026. DOI: 10.1080/13658816.2026.2640612",
-    link: "http://dx.doi.org/10.1080/13658816.2026.2640612"
+    link: "http://dx.doi.org/10.1080/13658816.2026.2640612",
+    wechatLink: "https://mp.weixin.qq.com/s/KTGfjr2rC9iZQFvc7BVRJA"
   },
   {
     id: 2026003,
     title: "UniD-Shift: Towards Unified Semantic Segmentation via Interpretable Shared–Private Multimodal Decomposition",
     topic: "Spatio-temporal (4D) Data Fusion",
     year: "2026",
-    date: "CVPR Findings 2026"
+    date: "CVPR Findings 2026",
+    wechatLink: "https://mp.weixin.qq.com/s/qSWyE-aVgjpNHah6vRZueg",
+    projectLink: "https://github.com/shuaizhang69/UniD-Shift"
   },
   {
     id: 2026004,
@@ -47,6 +64,7 @@ export const PUBLICATION_ITEMS = [
     date: "CVPR 2026. arXiv:2602.23645",
     link: "http://arxiv.org/abs/2602.23645",
     projectLink: "https://ai4city-hkust.github.io/BuildAnyPoint/",
+    wechatLink: "https://mp.weixin.qq.com/s/gQkg9zIs72DvKChWH7MnwQ",
     mediaContent: "/images/research/BAP.png"
   },
   {
@@ -57,6 +75,8 @@ export const PUBLICATION_ITEMS = [
     year: "2026",
     date: "CVPR 2026. arXiv:2603.02522",
     link: "https://arxiv.org/abs/2603.02522",
+    wechatLink: "https://mp.weixin.qq.com/s/BNgW3xkXwxuTFll1cOIWCA",
+    projectLink: "https://github.com/LeungTsang/NeighborMAE",
     mediaContent: "/images/publication/NeighborMAE.png"
   },
   {
@@ -74,6 +94,7 @@ export const PUBLICATION_ITEMS = [
     year: "2026",
     date: "GIScience & Remote Sensing, 2026. DOI: 10.1080/15481603.2026.2623327",
     link: "https://doi.org/10.1080/15481603.2026.2623327",
+    wechatLink: "https://mp.weixin.qq.com/s/AQINgWI4c3HiXQ2lOlcUFA",
     mediaContent: "/images/publication/DWQ.png"
   },
   {
@@ -84,6 +105,8 @@ export const PUBLICATION_ITEMS = [
     year: "2026",
     date: "IEEE TGRS, 2026. DOI: 10.1109/TGRS.2026.3669158",
     link: "https://doi.org/10.1109/TGRS.2026.3669158",
+    wechatLink: "https://mp.weixin.qq.com/s/qU3p7Q3QK5TA2eyyPQsO5Q",
+    projectLink: "https://github.com/XiangyuChen666/DSTI-Net",
     mediaContent: "/images/publication/DSTI.png"
   },
   {
@@ -94,6 +117,8 @@ export const PUBLICATION_ITEMS = [
     year: "2026",
     date: "ICLR 2026",
     link: "https://github.com/Anthony-ECPKN/SkyEvent",
+    wechatLink: "https://mp.weixin.qq.com/s/_cf9EJeoPL79Duzh_zgmjg",
+    projectLink: "https://anthony-ecpkn.github.io/SkyEvent.github.io/",
     mediaContent: "/images/publication/SKYEVEN.png"
   },
   {
@@ -104,6 +129,8 @@ export const PUBLICATION_ITEMS = [
     year: "2026",
     date: "International Journal of Applied Earth Observation and Geoinformation (JAG), 2026. DOI: 10.1016/j.jag.2025.105034",
     link: "https://doi.org/10.1016/j.jag.2025.105034",
+    wechatLink: "https://mp.weixin.qq.com/s/fXknzW9aynaAw3B6N-wUsQ",
+    projectLink: "https://github.com/ai4city-hkust/buildingmultiview",
     mediaContent: "/images/publication/微信图片_2026-03-29_181922_037.png"
   },
   {
@@ -115,6 +142,7 @@ export const PUBLICATION_ITEMS = [
     date: "ISPRS Journal of Photogrammetry and Remote Sensing, 2025. DOI: 10.1016/j.isprsjprs.2025.10.008",
     link: "https://doi.org/10.1016/j.isprsjprs.2025.10.008",
     wechatLink: "https://mp.weixin.qq.com/s/aNZjGcmorOJKLHZeelAmtw",
+    projectLink: "https://ulsrgs.github.io/",
     mediaContent: "/images/research/USLR-GS/1-s2.0-S092427162500396X-gr19.jpg"
   },
   {
@@ -125,6 +153,7 @@ export const PUBLICATION_ITEMS = [
     year: "2026",
     date: "ISPRS Journal of Photogrammetry and Remote Sensing, 2026. DOI: 10.1016/j.isprsjprs.2025.10.035",
     link: "https://doi.org/10.1016/j.isprsjprs.2025.10.035",
+    wechatLink: "https://mp.weixin.qq.com/s/GvI1sci-JF1eAqFUcAOm3g",
     mediaContent: "/images/publication/dual-domain.png"
   },
   {
@@ -146,6 +175,8 @@ export const PUBLICATION_ITEMS = [
     year: "2025",
     date: "Transactions in GIS (TGIS), 2025. DOI: 10.1111/tgis.70032",
     link: "https://doi.org/10.1111/tgis.70032",
+    projectLink: "https://github.com/stscl/gdverse",
+    wechatLink: "https://mp.weixin.qq.com/s/mXuPeSShnPXQQWKme_53Dw",
     mediaContent: "/images/research/gdverse.png"
   },
   {
@@ -193,6 +224,7 @@ export const PUBLICATION_ITEMS = [
     year: "2025",
     date: "International Conference on Spatial Data and Intelligence, Springer, 2025. DOI: 10.1007/978-981-95-3102-8_1",
     link: "https://doi.org/10.1007/978-981-95-3102-8_1",
+    projectLink: "https://github.com/Jasper0122/BuildingView",
     mediaContent: "/images/publication/BV.png"
   }
 ];

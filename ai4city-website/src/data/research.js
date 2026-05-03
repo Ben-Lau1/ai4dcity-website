@@ -1,5 +1,16 @@
 export const RESEARCH_PROJECTS = [
   {
+    id: "geoidentity-sat2street",
+    title: "Bridging street view coverage disparities through geographic identity preserving generation from satellite view",
+    desc: "Street view imagery (SVI) provides a human-centric view of urban environments and is widely used for analyzing greenery, mobility, socioeconomics conditions, health outcomes, and safety perception. However, its coverage is highly uneven, with developing regions systematically underrepresented. We propose GeoIdentity-Sat2Street, a geographic identity preserving framework that leverages satellite imagery to expand SVI coverage through polar-transformation conditional GAN and diffusion-based generation conditioned on semantic captions, location metadata, and structural priors.",
+    mediaType: "image",
+    mediaContent: "/images/research/GeoIdentity-Sat2Street.jpg",
+    link: "https://doi.org/10.1016/j.isprsjprs.2026.03.049",
+    date: "May 6 2026",
+    topic: "Urban Env-Understanding",
+    year: "2026"
+  },
+  {
     id: 1774849010173,
     title: "NeighborMAE: Exploiting Spatial Dependencies between Neighboring Earth Observation Images in Masked Autoencoders Pretraining",
     desc: "We propose NeighborMAE, which learns spatial dependencies by joint reconstruction of neighboring Earth Observation images. To ensure that the reconstruction remains challenging, we leverage a heuristic strategy to dynamically adjust the mask ratio and the pixel-level loss weight. Experimental results across various pretraining datasets and downstream tasks show that NeighborMAE significantly outperforms existing baselines, underscoring the value of neighboring images in Masked Image Modeling for Earth Observation and the efficacy of our designs.",
