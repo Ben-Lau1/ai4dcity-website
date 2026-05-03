@@ -5,7 +5,7 @@ export const TEAM_DATA = {
   pi: {
     name: "Wufan Zhao",
     role: "Principal Investigator",
-    bio: (<>Wufan ZHAO is an Assistant Professor (tenure-track) and PhD supervisor at HKUST(Guangzhou), jointly appointed by <a href="https://soch.hkust-gz.edu.cn/academics/ugod/" target="_blank" rel="noopener noreferrer">Urban Governance and Design (UGOD)</a> and <a href="https://www.hkust-gz.edu.cn/academics/hubs-and-thrust-areas/systems-hub/robotics-and-autonomous-systems/" target="_blank" rel="noopener noreferrer">Robotics and Autonomous Systems (ROAS)</a>. He obtained his PhD in 2022 from the  <a href="https://www.itc.nl/" target="_blank" rel="noopener noreferrer"> Faculty of Geo-Information Science and Earth Observation (ITC)</a>, University of Twente, the Netherlands, and conducted post-doctoral research at <a href="https://iiw.kuleuven.be/onderzoek/geomatics/home" target="_blank" rel="noopener noreferrer" >KU Leuven</a>, Belgium, in 2023. His research interests include AI-based intelligent interpretation of remote-sensing images, 3D urban modeling with particular attention to high-fidelity and generative techniques, and the fusion and analytics of multi-source spatiotemporal data. His work aims to support multi-scale analysis and decision-making for urban-environment and socio-economic challenges, ultimately contributing to the UN Sustainable Development Goals.</>),
+    bio: (<>Wufan ZHAO is an Assistant Professor (tenure-track) and PhD supervisor at HKUST(Guangzhou), jointly appointed by <a href="https://soch.hkust-gz.edu.cn/academics/ugod/" target="_blank" rel="noopener noreferrer">Urban Governance and Design (UGOD)</a> and <a href="https://www.hkust-gz.edu.cn/academics/hubs-and-thrust-areas/systems-hub/robotics-and-autonomous-systems/" target="_blank" rel="noopener noreferrer">Robotics and Autonomous Systems (ROAS)</a>. He obtained his PhD in 2022 from the  <a href="https://www.itc.nl/" target="_blank" rel="noopener noreferrer"> Faculty of Geo-Information Science and Earth Observation (ITC)</a>, University of Twente, the Netherlands, and conducted post-doctoral research at <a href="https://iiw.kuleuven.be/onderzoek/geomatics/home" target="_blank" rel="noopener noreferrer" >KU Leuven</a>, Belgium, in 2023. His research interests include AI-based intelligent interpretation of remote-sensing images, 3D urban modeling with particular attention to high-fidelity and generative techniques, and the fusion and analytics of multi-source spatiotemporal data. His work aims to support multi-scale analysis and decision-making for urban-environment and socio-economic challenges, ultimately contributing to the UN Sustainable Development Goals. He also emphasizes the practical deployment of these technologies in fields such as smart cities, embodied intelligence, natural resources, and engineering surveying and mapping.</>),
     edu: [
       "Editorial Board Member of the Journal of Photogrammetric Engineering & Remote Sensing", 
       "Executive Committee Member, ACM SIGSPATIAL China Chapter",
@@ -50,9 +50,7 @@ export const TEAM_DATA = {
     { name: "Shuxian Shi", role: "Remote sensing applications and urban environmental monitoring", email: "Shelly-Shi@outlook.comR", homepage: "", img: "/images/people/shishuxian.jpg" },
     { name: "Danyang Zhang", role: "Computer vision; 3DGS; AI for City", email: "zdy@gatech.edu", homepage: "", img: "/images/people/zhangdanyang.png" },
     { name: "Hongye Hou", role: "3D vision, multi-model learning", email: "houhongye2001@stu.xjtu.edu.cn", homepage: "", img: "/images/people/houhongye.jpg" },
-    { name: "Xuran Hu", role: "Intelligent interpretation of multimodal remote sensing data", email: "XuRanHu@stu.xidian.edu.cn", homepage: "xuran-hu.github.io", img: "/images/people/huxuran.jpg" },
     { name: "Xiaoyu Li", role: "UAV remote sensing, environmental monitoring and LULC classification", email: "xiaoyu6936@gmail.com", homepage: "", img: "/images/people/lixiaoyu.png" },
-    { name: "Qican Weng", role: "Spatial science, GeoAI, Visualization", email: "626710943@QQ.com", homepage: "", img: "/images/people/profile.png" },
     { name: "Qinghe Liu", role: "Intelligent point cloud processing", email: "liuqinghe@nwafu.edu.cn", homepage: "", img: "/images/people/profile.png" }
   ],
 
@@ -62,7 +60,8 @@ export const TEAM_DATA = {
     
     { name: "Hongyu Ye", role: "Spatial big data applications and 3D city modelling and simulation", email: "jackson513ye@qq.com", homepage: "https://www.redfish.space/", img: "/images/people/yehongyu.jpg" },
     { name: "Haoran Gong", role: "computer vision, point clouds, and 3D reconstruction", email: "gonghr@stu.xjtu.edu.cn", homepage: "", img: "/images/people/gonghaoran.jpg" },
-    { name: "Sihan Li", role: "GIS, Information Visualization", email: "15902090311@163.com", homepage: "", img: "/images/people/profile.png" }
+    { name: "Sihan Li", role: "GIS, Information Visualization", email: "15902090311@163.com", homepage: "", img: "/images/people/profile.png" },
+    { name: "Xuran Hu", role: "Intelligent interpretation of multimodal remote sensing data", email: "XuRanHu@stu.xidian.edu.cn", homepage: "xuran-hu.github.io", img: "/images/people/huxuran.jpg" }
   ],
 
   // 7. 访问学者 (Visiting Scholars)
@@ -75,12 +74,13 @@ export const TEAM_DATA = {
   // 8. 校友 (Alumni)
   alu: [
     { name: "Hongrong Wang", role: "Studying for Msc in CUHK(Shenzhen)", email: "b1520618977@163.com", homepage: "", img: "/images/people/wanghongrong.png" },
-    { name: "Zongrong Li", role: "Phd at TAMU", email: "zongrongli@hkust-gz.edu.cn", homepage: "https://jasper0122.github.io/", img: "/images/people/Lizongrong.png" },
-    { name: "Zhongcheng Hong", role: "Phd at Auckland University of Technology", email: "Zhongchengh@hkust-gz.edu.cn", homepage: "", img: "/images/people/HongZhongcheng.png" },
-    { name: "Ke Xu", role: "Phd at HKUST", email: "kexu0501@gmail.com", homepage: "", img: "/images/people/xuke.png" },
+    { name: "Zongrong Li", role: "Pre RA, now Phd at TAMU", email: "zongrongli@hkust-gz.edu.cn", homepage: "https://jasper0122.github.io/", img: "/images/people/Lizongrong.png" },
+    { name: "Zhongcheng Hong", role: "Pre RA, now Phd at Auckland University of Technology", email: "Zhongchengh@hkust-gz.edu.cn", homepage: "", img: "/images/people/HongZhongcheng.png" },
+    { name: "Ke Xu", role: "Pre RA, now Phd at HKUST", email: "kexu0501@gmail.com", homepage: "", img: "/images/people/xuke.png" },
     { name: "Rui Zhang", role: "European job-based doctoral program", email: "", homepage: "", img: "/images/people/zhangrui.png" },
-    { name: "Guanyu Hou", role: "Phd at TAMU", email: "houguanyu21@gmail.com", homepage: "", img: "/images/people/houguanyu.png" },
-    { name: "Zhiyuan Xu", role: "Phd at University of Bristol", email: "RenHonglin010407@163.com", homepage: "", img: "/images/people/profile.png" },
-    { name: "Juran Zhang", role: "Working", email: "zhangjurann@gmail.com", homepage: "https://www.linkedin.com/in/juran-zhang", img: "/images/people/profile.png" }
+    { name: "Guanyu Hou", role: "Pre RA, now Phd at TAMU", email: "houguanyu21@gmail.com", homepage: "", img: "/images/people/houguanyu.png" },
+    { name: "Zhiyuan Xu", role: "Pre RA, now Phd at University of Bristol", email: "RenHonglin010407@163.com", homepage: "", img: "/images/people/profile.png" },
+    { name: "Juran Zhang", role: "Working", email: "zhangjurann@gmail.com", homepage: "https://www.linkedin.com/in/juran-zhang", img: "/images/people/profile.png" },
+    { name: "Qican Weng", role: "Spatial science, GeoAI, Visualization", email: "626710943@QQ.com", homepage: "", img: "/images/people/profile.png" }
   ]
 };
