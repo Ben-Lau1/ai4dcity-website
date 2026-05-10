@@ -81,6 +81,6 @@ export const TEAM_DATA = {
     { name: "Guanyu Hou", role: "Pre RA, now Phd at TAMU", email: "houguanyu21@gmail.com", homepage: "", img: "/images/people/houguanyu.png" },
     { name: "Zhiyuan Xu", role: "Pre RA, now Phd at University of Bristol", email: "RenHonglin010407@163.com", homepage: "", img: "/images/people/profile.png" },
     { name: "Juran Zhang", role: "Pre RA, now Working", email: "zhangjurann@gmail.com", homepage: "https://www.linkedin.com/in/juran-zhang", img: "/images/people/profile.png" },
-    { name: "Qican Weng", role: "Spatial science, GeoAI, Visualization", email: "626710943@QQ.com", homepage: "", img: "/images/people/profile.png" }
+    { name: "Qican Weng", role: "Pre RA, now Spatial science, GeoAI, Visualization", email: "626710943@QQ.com", homepage: "", img: "/images/people/profile.png" }
   ]
 };
