@@ -84,7 +84,8 @@ export const PUBLICATION_ITEMS = [
     title: "Rsc-CoT: Visual-CoT Reasoning and Reinforced Optimization for Remote Sensing Change Captioning",
     topic: "Spatio-temporal (4D) Data Fusion",
     year: "2026",
-    date: "ICASSP 2026"
+    date: "ICASSP 2026",
+    wechatLink: "https://mp.weixin.qq.com/s/RgUkGw-Vs0cmgObCnPbtlg"
   },
   {
     id: 1774848683155,
