@@ -1,6 +1,21 @@
 // src/data/articles.js
 
 export const ARTICLE_CONTENT = {
+  "seminar-hao-li": {
+    title: "学术研讨会 | Rapid Disaster Response based on GeoAI and Cross-View Imagery",
+    subtitle: "新加坡国立大学 李浩博士",
+    date: "May 20, 2026",
+    site: "E1-201",
+    author: "AI4City Lab",
+    img: "",
+    abstract: "5月20日15:00-16:30，AI4City Lab将举办学术研讨会，邀请新加坡国立大学李浩博士带来基于地理人工智能与跨视角影像的快速灾害响应研究分享。",
+    body: [
+      "Extreme climate events and natural disasters play an important role in shaping the interaction between humans and urban infrastructure. In this talk, we introduce a series of novel disaster mapping methods aimed at addressing two major issues: geolocation and damage perception estimation, through cross-view street-level imagery and ultra-high-resolution satellite imagery. The first CVDisaster framework comprises two cross-view models: the first is a cross-view geolocation model based on contrastive learning objectives, utilizing a twin-structure image encoder; the second is a cross-view classification model based on a coupled global context visual Transformer. Taking Hurricane IAN as a case study, we constructed a new cross-view dataset, CVIAN, and conducted extensive experiments to evaluate the performance of the framework.",
+      "Dr. Hao Li currently works as a lecturer in the Department of Geography at the National University of Singapore and a researcher at the NUS Artificial Intelligence Research Institute, primarily focusing on Geographic Information Science (GIScience) and GeoAI research. He obtained his PhD from Heidelberg University in Germany and previously worked as a postdoctoral researcher at the Technical University of Munich. His research interests include multimodal spatiotemporal intelligent perception, spatial representation learning, disaster response, volunteer geographic information (VGI) quality assessment and utilization, as well as spatial computing methods for sustainable and resilient cities. To date, he has published over 50 peer-reviewed papers in top journals and conferences, including RSE, ISPRS P&RS, IJGIS, CEUS, ES&T, and ACM SIGSPATIAL."
+    ],
+    link: "https://mp.weixin.qq.com/s/r1tcwnxKpn882p85KE01wA",
+    details: []
+  },
   "spatialdi-forum": {
     title: "AI4City Lab Presents at the 4th Songshan Remote Sensing Forum and SpatialDI 2026",
     subtitle: "Team members received Outstanding Oral Presentation Award and Outstanding Poster Award",
