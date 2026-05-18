@@ -42,7 +42,7 @@ export const HomePage = ({
             </h1>
             
             {ARTICLE_CONTENT['seminar-hao-li'] && (() => {
-              const s = ARTICLE_CONTENT['seminar'];
+              const s = ARTICLE_CONTENT['seminar-hao-li'];
               const hasExternal = s.link && s.link.trim();
               const hasInternal = s.body && s.body.length > 0;
               const canClick = hasExternal || hasInternal;
