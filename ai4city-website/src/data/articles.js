@@ -2,7 +2,7 @@
 
 export const ARTICLE_CONTENT = {
   "eccv-2026-3d-reconstruction": {
-    title: "Three papers on 3D city scene reconstruction accepted at ECCV 2026",
+    title: "Three papers on 3D city scene reconstruction accepted at ECCV 2026 — Congratulations to Zhuoxiao, Jing, and Yinrui!",
     subtitle: "Congratulations to Zhuoxiao, Jing, and Yinrui!",
     date: "June 18, 2026",
     site: "",
