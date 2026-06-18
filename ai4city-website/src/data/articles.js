@@ -1,6 +1,18 @@
 // src/data/articles.js
 
 export const ARTICLE_CONTENT = {
+  "eccv-2026-3d-reconstruction": {
+    title: "Three papers on 3D city scene reconstruction accepted at ECCV 2026",
+    subtitle: "Congratulations to Zhuoxiao, Jing, and Yinrui!",
+    date: "June 18, 2026",
+    site: "",
+    author: "AI4City Lab",
+    img: "",
+    abstract: "Three papers on 3D city scene reconstruction from AI4City Lab have been accepted at ECCV 2026. Congratulations to Zhuoxiao, Jing, and Yinrui!",
+    body: [],
+    link: "",
+    details: []
+  },
   "seminar-hao-li": {
     title: "Seminar | Rapid Disaster Response based on GeoAI and Cross-View Imagery",
     subtitle: "Dr. Hao Li, National University of Singapore",
