@@ -13,6 +13,18 @@ export const ARTICLE_CONTENT = {
     link: "",
     details: []
   },
+  "cvpr-2026-usm-2nd-place": {
+    title: "Congratulations to Hongye Hou and the team for securing 2nd place at the 3rd Workshop on Urban Scene Modeling, #CVPR2026!",
+    subtitle: "2nd place at the 3rd Workshop on Urban Scene Modeling, CVPR 2026",
+    date: "May 31, 2026",
+    site: "",
+    author: "AI4City Lab",
+    img: "",
+    abstract: "Congratulations to Hongye Hou and the team for securing 2nd place at the 3rd Workshop on Urban Scene Modeling, CVPR 2026!",
+    body: [],
+    link: "",
+    details: []
+  },
   "seminar-hao-li": {
     title: "Seminar | Rapid Disaster Response based on GeoAI and Cross-View Imagery",
     subtitle: "Dr. Hao Li, National University of Singapore",
