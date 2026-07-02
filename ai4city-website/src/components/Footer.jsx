@@ -18,13 +18,27 @@ export const Footer = ({ setPage, scrollToAbout }) => {
                   <div className="flex flex-col gap-2 min-w-[130px]">
                     <h4 className="font-semibold text-lg mb-2">Features</h4>
                     {NAV_LINKS.map(link => (
-                      <button 
-                        key={link.id} 
-                        onClick={() => handleNavClick(link.id)}
-                        className="text-left text-gray-500 hover:text-black transition"
-                      >
-                        {link.label}
-                      </button>
+                      <div key={link.id} className="flex flex-col gap-1">
+                        <button
+                          onClick={() => handleNavClick(link.id)}
+                          className="text-left text-gray-500 hover:text-black transition"
+                        >
+                          {link.label}
+                        </button>
+                        {link.children && (
+                          <div className="flex flex-col gap-1 pl-3">
+                            {link.children.map(child => (
+                              <button
+                                key={child.id}
+                                onClick={() => handleNavClick(child.id)}
+                                className="text-left text-sm text-gray-400 hover:text-black transition"
+                              >
+                                {child.label}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     ))}
                   </div>
                   <div className="flex flex-col gap-8 flex-1">
