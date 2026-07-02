@@ -1,298 +1,535 @@
-import React, { useState, useMemo } from 'react';
-import { Database } from 'lucide-react';
+import React, { useMemo } from 'react';
+import { Layers3 } from 'lucide-react';
 import { FadeInSection } from './FadeInSection';
 
-// ---------------------------------------------------------------------------
-// MediaSlot — renders the top "thumbnail" area of each card.
-//
-// Supported mediaType values:
-//   "image"   — src in mediaContent  (default / backward-compatible)
-//   "video"   — YouTube URL or direct .mp4 URL in mediaContent
-//   "map"     — any iframe-embeddable URL in mediaContent
-//   "custom"  — pass a React element in mediaContent (JSX widget)
-//   undefined — falls back to a neutral placeholder icon
-// ---------------------------------------------------------------------------
-const MediaSlot = ({ mediaType, mediaContent, title }) => {
-  const base =
-    'w-full aspect-video flex-shrink-0 bg-gray-100 overflow-hidden rounded-t-2xl';
+const SAT2CITY_V2 = {
+  id: 'sat2city-v2',
+  title: 'Sat2City v2: Native 3D City Asset Generation from a Single Satellite Image',
+  displayTitle: 'Sat2City v2',
+  desc: 'Generates explicit city-scale geometry and satellite-consistent textured mesh assets from a single satellite image.',
+  topic: 'AI based 3D City Modeling',
+  year: '2026',
+  date: 'Pre-print, 2026. arXiv:2606.24138',
+  link: 'https://arxiv.org/abs/2606.24138',
+  projectLink: 'https://ai4city-hkust.github.io/Sat2City-v2/',
+  mediaContent: '/images/research/project-pages/sat2city-v2.png',
+};
 
-  if (mediaType === 'image' && mediaContent) {
+const PROJECT_PREVIEWS = {
+  'sat2city-v2': [
+    '/images/research/project-pages/sat2city-v2.png',
+  ],
+  'geoidentity-sat2street': [
+    '/images/research/GeoIdentity-Sat2Street.jpg',
+  ],
+  2026001: [
+    '/images/research/tedm-causal-interactions.png',
+    '/images/research/project-pages/tedm.png',
+  ],
+  2026003: [
+    '/images/research/unid-shift-workflow.png',
+    '/images/research/project-pages/unid-shift.png',
+  ],
+  2026004: [
+    '/images/research/BAP.png',
+    '/images/research/project-pages/buildanypoint.png',
+  ],
+  1774775739519: [
+    '/images/publication/DSTI.png',
+  ],
+  1774848031951: [
+    '/images/publication/SKYEVEN.png',
+  ],
+  1774779504458: [
+    '/images/publication/微信图片_2026-03-29_181922_037.png',
+    '/images/resource/BuildMulview.png',
+  ],
+  33: [
+    '/images/research/gdverse.png',
+    '/images/resource/gdverse.png',
+  ],
+  4: [
+    '/images/research/USLR-GS/1-s2.0-S092427162500396X-gr19.jpg',
+    '/images/research/project-pages/ulsr-gs.png',
+  ],
+  3: [
+    '/images/research/s2c2.png',
+    '/images/research/project-pages/sat2city.png',
+  ],
+  1: [
+    '/images/publication/BV.png',
+    '/images/resource/Buildingview.png',
+  ],
+};
+
+const RESEARCH_INCLUDE_IDS = new Set([
+  'sat2city-v2',
+  'geoidentity-sat2street',
+  '2026001',
+  '2026003',
+  '2026004',
+  '1774775739519',
+  '1774848031951',
+  '1774779504458',
+  '33',
+  '4',
+  '3',
+  '1',
+]);
+
+const RESEARCH_MAP = [
+  {
+    id: 'ai-3d-city',
+    topic: 'AI based 3D City Modeling',
+    summary: 'Generative and reconstructive AI for city-scale 3D assets.',
+    keywords: ['Satellite-to-3D', '3D Gaussian', 'Point clouds', 'Reconstruction'],
+    frameworkModules: [
+      {
+        position: 'top-left',
+        label: 'Generation',
+        title: 'Satellite-to-3D Generation',
+        desc: 'Native city-scale 3D assets from satellite observations.',
+        projects: [
+          { id: 'sat2city-v2', displayTier: 'medium', priority: 'core' },
+          { id: '3', displayTier: 'compact', priority: 'core' },
+        ],
+      },
+      {
+        position: 'top-right',
+        label: 'Generation',
+        title: 'Point Cloud / Structured Generation',
+        desc: 'Structured 3D building abstraction from diverse point clouds.',
+        projects: [{ id: '2026004', displayTier: 'medium', priority: 'core' }],
+      },
+      {
+        position: 'bottom-left',
+        label: 'Reconstruction',
+        title: '3D Gaussian Reconstruction',
+        desc: 'Large-scale Gaussian reconstruction for urban surface modeling.',
+        projects: [{ id: '4', displayTier: 'medium', priority: 'core' }],
+      },
+      {
+        position: 'bottom-right',
+        label: 'Reconstruction',
+        title: 'Dataset / 360 / Multi-view Reconstruction',
+        desc: 'Benchmarks and multimodal datasets for robust 3D reconstruction.',
+        projects: [{ id: '1774848031951', displayTier: 'compact', priority: 'secondary' }],
+      },
+    ],
+  },
+  {
+    id: 'spatiotemporal-fusion',
+    topic: 'Spatio-temporal (4D) Data Fusion',
+    summary: 'Learning and analysis across space, time, and sensing modalities.',
+    keywords: ['Multimodal fusion', 'Semantic segmentation', 'Spatial causality', 'GeoAI'],
+    frameworkModules: [
+      {
+        position: 'top-left',
+        label: 'Representation',
+        title: 'Multimodal Change & Monitoring',
+        desc: 'Task-driven dynamic scene monitoring from multimodal observations.',
+        projects: [{ id: '1774775739519', displayTier: 'medium', priority: 'core' }],
+      },
+      {
+        position: 'top-right',
+        label: 'Representation',
+        title: 'Semantic Segmentation / Fusion',
+        desc: 'Interpretable shared-private multimodal decomposition and segmentation.',
+        projects: [{ id: '2026003', displayTier: 'medium', priority: 'core' }],
+      },
+      {
+        position: 'bottom-left',
+        label: 'Reasoning',
+        title: 'Spatial Causality & Statistical Modeling',
+        desc: 'Open-source tools for causality, heterogeneity, and spatiotemporal inference.',
+        projects: [
+          { id: '2026001', displayTier: 'compact', priority: 'secondary' },
+          { id: '33', displayTier: 'compact', priority: 'secondary' },
+        ],
+      },
+      {
+        position: 'bottom-right',
+        label: 'Reasoning',
+        title: 'GeoAI Reasoning / Benchmark',
+        desc: 'Reserved for confirmed project pages on GeoAI reasoning and benchmarks.',
+        projects: [],
+      },
+    ],
+  },
+  {
+    id: 'urban-env',
+    topic: 'Urban Env-Understanding',
+    summary: 'Interpreting built environments from multimodal urban observations.',
+    keywords: ['Street view', 'Building attributes', 'Cross-view', 'Urban perception'],
+    frameworkModules: [
+      {
+        position: 'top-left',
+        label: 'Perception',
+        title: 'Cross-view Urban Observation',
+        desc: 'Linking human-centric urban observations across satellite and street views.',
+        projects: [{ id: 'geoidentity-sat2street', displayTier: 'medium', priority: 'core' }],
+      },
+      {
+        position: 'top-right',
+        label: 'Perception',
+        title: 'Building / Asset Understanding',
+        desc: 'Building-level attributes, semantic enrichment, and exterior database construction.',
+        projects: [
+          { id: '1774779504458', displayTier: 'medium', priority: 'core' },
+          { id: '1', displayTier: 'compact', priority: 'secondary' },
+        ],
+      },
+      {
+        position: 'bottom-left',
+        label: 'Application',
+        title: 'Urban Change / Resilience',
+        desc: 'Reserved for confirmed project pages on urban change, resilience, and disaster applications.',
+        projects: [],
+      },
+      {
+        position: 'bottom-right',
+        label: 'Application',
+        title: 'Cultural Heritage / Domain Applications',
+        desc: 'Reserved for confirmed project pages on cultural heritage and domain applications.',
+        projects: [],
+      },
+    ],
+  },
+];
+
+const PROJECT_DISPLAY_TITLES = {
+  'sat2city-v2': 'Sat2City v2',
+  'geoidentity-sat2street': 'GeoIdentity-Sat2Street',
+  2026001: 'tEDM',
+  2026003: 'UniD-Shift',
+  2026004: 'BuildAnyPoint',
+  1774775739519: 'DSTI-Net',
+  1774848031951: 'SkyEvents',
+  1774779504458: 'BuildingMultiView',
+  33: 'gdverse',
+  4: 'ULSR-GS',
+  3: 'Sat2City',
+  1: 'BuildingView',
+};
+
+const TIER_CLASS = {
+  hero: 'md:col-span-2',
+  wide: 'md:col-span-2',
+  medium: 'md:col-span-1',
+  compact: 'md:col-span-1',
+};
+
+const TIER_IMAGE_CLASS = {
+  hero: 'h-52 md:h-60',
+  wide: 'h-44 md:h-48',
+  medium: 'h-40 md:h-44',
+  compact: 'h-40 md:h-44',
+};
+
+const isRepositoryLink = (url = '') => /github\.com/i.test(url);
+
+const isPaperLink = (url = '') =>
+  /(doi\.org|arxiv\.org|sciencedirect\.com|ieee\.org|springer\.com|tandfonline\.com)/i.test(url);
+
+const getProjectActionLabel = (url) => (isRepositoryLink(url) ? 'Repository' : 'Project Page');
+
+const normalizeProject = (item) => ({
+  ...item,
+  id: String(item.id),
+  displayTitle: PROJECT_DISPLAY_TITLES[item.id] || item.displayTitle || item.title,
+  previewImages: PROJECT_PREVIEWS[item.id] || (item.mediaContent ? [item.mediaContent] : []),
+  mediaContent: PROJECT_PREVIEWS[item.id]?.[0] || item.mediaContent || null,
+});
+
+const LinkIcon = ({ type }) => {
+  if (type === 'wechat') {
     return (
-      <div className={base}>
-        <img
-          src={mediaContent}
-          alt={title}
-          className="w-full h-full object-cover hover:scale-105 transition duration-500"
-        />
-      </div>
+      <svg viewBox="0 0 24 24" fill="currentColor" className="h-3.5 w-3.5 shrink-0">
+        <path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 0 1 .213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 0 0 .167-.054l1.903-1.114a.864.864 0 0 1 .717-.098 10.16 10.16 0 0 0 2.837.403c-.303-.474-.474-.997-.474-1.542 0-3.154 3.136-5.711 7.004-5.711.05 0 .1.003.149.003C14.923 6.195 12.051 2.188 8.691 2.188zm-2.374 3.47a.875.875 0 1 1 0 1.75.875.875 0 0 1 0-1.75zm4.748 0a.875.875 0 1 1 0 1.75.875.875 0 0 1 0-1.75zM24 14.465c0-3.154-3.136-5.711-7.004-5.711S10 11.311 10 14.465c0 3.155 3.136 5.711 7.004 5.711.868 0 1.698-.126 2.467-.354a.682.682 0 0 1 .574.079l1.521.89a.26.26 0 0 0 .133.043.236.236 0 0 0 .234-.236c0-.058-.023-.115-.038-.172l-.312-1.183a.473.473 0 0 1 .17-.533C23.032 17.98 24 16.32 24 14.465zm-9.195-1.001a.7.7 0 1 1 0-1.4.7.7 0 0 1 0 1.4zm4.39 0a.7.7 0 1 1 0-1.4.7.7 0 0 1 0 1.4z" />
+      </svg>
     );
   }
 
-  if (mediaType === 'video' && mediaContent) {
-    // Accept both YouTube share links and direct video URLs
-    const isYoutube =
-      mediaContent.includes('youtube.com') ||
-      mediaContent.includes('youtu.be');
-    const embedSrc = isYoutube
-      ? mediaContent
-          .replace('watch?v=', 'embed/')
-          .replace('youtu.be/', 'youtube.com/embed/')
-      : null;
-
+  if (type === 'project') {
     return (
-      <div className={base}>
-        {embedSrc ? (
-          <iframe
-            src={embedSrc}
-            title={title}
-            className="w-full h-full"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          />
-        ) : (
-          // Direct video file
-          <video
-            src={mediaContent}
-            controls
-            className="w-full h-full object-cover"
-          />
-        )}
-      </div>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-3.5 w-3.5 shrink-0">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="2" y1="12" x2="22" y2="12" />
+        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+      </svg>
     );
   }
 
-  if (mediaType === 'map' && mediaContent) {
-    return (
-      <div className={base}>
-        <iframe
-          src={mediaContent}
-          title={title}
-          className="w-full h-full border-0"
-          loading="lazy"
-        />
-      </div>
-    );
-  }
-
-  // "custom" — caller passes a ready-made React element
-  if (mediaType === 'custom' && mediaContent) {
-    return (
-      <div className={base + ' flex items-center justify-center'}>
-        {mediaContent}
-      </div>
-    );
-  }
-
-  // Fallback placeholder
   return (
-    <div className={base + ' flex items-center justify-center text-slate-400'}>
-      <Database size={40} />
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-3.5 w-3.5 shrink-0">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <path d="M14 2v6h6" />
+      <path d="M16 13H8" />
+      <path d="M16 17H8" />
+      <path d="M10 9H8" />
+    </svg>
+  );
+};
+
+const ActionLink = ({ href, label, type = 'project' }) => {
+  if (!href) return null;
+
+  const styleByType = {
+    project: 'text-blue-700 bg-blue-50 hover:bg-blue-100 border-blue-200',
+    paper: 'text-gray-700 bg-gray-50 hover:bg-gray-100 border-gray-200',
+    wechat: 'text-green-700 bg-green-50 hover:bg-green-100 border-green-200',
+  };
+
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className={`inline-flex h-7 items-center gap-1 whitespace-nowrap rounded-full border px-2.5 text-[10px] font-semibold transition-colors duration-150 xl:px-3 xl:text-xs ${styleByType[type]}`}
+    >
+      <LinkIcon type={type} />
+      {label}
+    </a>
+  );
+};
+
+const ProjectActions = ({ item }) => {
+  const showPaper = item.link && item.link !== item.projectLink && isPaperLink(item.link);
+  const showCode = item.link && item.link !== item.projectLink && isRepositoryLink(item.link);
+
+  return (
+    <div className="flex min-h-16 flex-wrap content-start gap-1.5 xl:gap-2">
+      <ActionLink
+        href={item.projectLink}
+        label={getProjectActionLabel(item.projectLink)}
+        type="project"
+      />
+      {showPaper && <ActionLink href={item.link} label="Paper" type="paper" />}
+      {showCode && <ActionLink href={item.link} label="Code" type="project" />}
+      <ActionLink href={item.wechatLink} label="Wechat Post" type="wechat" />
     </div>
   );
 };
 
-// ---------------------------------------------------------------------------
-// ResearchCard — a single paper / project card
-// ---------------------------------------------------------------------------
-const ResearchCard = ({ item }) => (
-  <FadeInSection className="bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-xl transition-shadow duration-300 flex flex-col">
-    {/* Media area */}
-    <a href={item.link} className="block cursor-pointer">
-      <MediaSlot
-        mediaType={item.mediaType}
-        mediaContent={item.mediaContent}
-        title={item.title}
-      />
-    </a>
+const ProjectCover = ({ item, className = '', showSecondary = false }) => {
+  const previewImages = item.previewImages?.length ? item.previewImages : item.mediaContent ? [item.mediaContent] : [];
+  const visibleImages = showSecondary ? previewImages.slice(0, 2) : previewImages.slice(0, 1);
+  const hasImages = visibleImages.length > 0;
+  const wrapperClass = hasImages
+    ? `block overflow-hidden border-b border-gray-100 bg-white p-2 ${className}`
+    : `flex flex-col items-center justify-center gap-3 bg-gray-100 text-gray-500 ${className}`;
 
-    {/* Body */}
-    <div className="flex flex-col flex-1 p-5">
-      {/* Topic + year badges */}
-      <div className="flex items-center gap-2 mb-3 text-xs font-bold uppercase tracking-wider text-orange-600">
-        {item.topic && <span>{item.topic}</span>}
-        {item.topic && item.year && <span>•</span>}
-        {item.year && <span>{item.year}</span>}
+  if (hasImages) {
+    const imageGridClass = visibleImages.length > 1
+      ? 'grid h-full grid-cols-1 gap-2 md:grid-cols-[1.25fr_0.85fr]'
+      : 'h-full';
+    const images = (
+      <div className={imageGridClass}>
+        {visibleImages.map((src, index) => (
+          <div key={src} className={`${index > 0 ? 'hidden md:block' : ''} h-full min-w-0 rounded-md bg-white`}>
+            <img
+              src={src}
+              alt={`${item.displayTitle} preview ${index + 1}`}
+              className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-[1.01]"
+              loading="lazy"
+            />
+          </div>
+        ))}
       </div>
+    );
 
-      {/* Title */}
+    return item.projectLink ? (
       <a
-        href={item.link}
-        className="hover:text-blue-600 transition-colors duration-300 block mb-3"
+        href={item.projectLink}
+        target="_blank"
+        rel="noreferrer"
+        className={`${wrapperClass} group`}
+        aria-label={`Open ${item.displayTitle} project page`}
       >
-        <h3 className="text-base md:text-lg font-bold leading-snug">
-          {item.title}
-        </h3>
+        {images}
       </a>
+    ) : (
+      <div className={wrapperClass}>{images}</div>
+    );
+  }
 
-      {/* Description */}
-      <p className="text-sm text-gray-600 leading-relaxed text-justify flex-1 line-clamp-4">
-        {item.desc}
-      </p>
-
-      {/* Footer: venue + extra links */}
-      <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between text-xs text-gray-400">
-        <span>{item.venue ?? item.date}</span>
-        <div className="flex gap-3">
-          {item.paperLink && (
-            <a
-              href={item.paperLink}
-              target="_blank"
-              rel="noreferrer"
-              className="hover:text-blue-600 transition-colors"
-            >
-              paper ↗
-            </a>
-          )}
-          {item.codeLink && (
-            <a
-              href={item.codeLink}
-              target="_blank"
-              rel="noreferrer"
-              className="hover:text-blue-600 transition-colors"
-            >
-              code ↗
-            </a>
-          )}
-          {item.demoLink && (
-            <a
-              href={item.demoLink}
-              target="_blank"
-              rel="noreferrer"
-              className="hover:text-blue-600 transition-colors"
-            >
-              demo ↗
-            </a>
-          )}
-        </div>
-      </div>
-    </div>
-  </FadeInSection>
-);
-
-// ---------------------------------------------------------------------------
-// ResearchListPage — main export
-// ---------------------------------------------------------------------------
-// 在组件外定义固定顺序
-const TOPIC_ORDER = [
-  'AI based 3D City Modeling',
-  'Spatio-temporal (4D) Data Fusion',
-  'Urban Env-Understanding',
-  
-  
-];
-export const ResearchListPage = ({ title, description, items, type = 'default' }) => {
-  const [selectedYear, setSelectedYear] = useState('All');
-
-  // Derive sorted unique years & ordered unique topics from data
-  const { years, topics } = useMemo(() => {
-  const uniqueYears = [
-    ...new Set(items.map((i) => i.year).filter(Boolean)),
-  ].sort((a, b) => b - a);
-
-  // 收集数据里实际出现的所有 topic
-  const presentTopics = new Set(items.map((i) => i.topic).filter(Boolean));
-
-  // 先按固定顺序排，再把不在 TOPIC_ORDER 里的追加到末尾
-  const uniqueTopics = [
-    ...TOPIC_ORDER.filter((t) => presentTopics.has(t)),
-    ...[...presentTopics].filter((t) => !TOPIC_ORDER.includes(t)),
-  ];
-
-  return { years: ['All', ...uniqueYears], topics: uniqueTopics };
-}, [items]);
-
-  // Filter by year; grouping by topic happens below
-  const filteredItems = useMemo(
-    () =>
-      items.filter(
-        (item) =>
-          selectedYear === 'All' ||
-          (item.year && item.year.toString() === selectedYear.toString()),
-      ),
-    [items, selectedYear],
+  const placeholder = (
+    <>
+      <Layers3 size={34} />
+      <span className="max-w-[220px] text-center text-sm font-semibold">{item.topic}</span>
+    </>
   );
 
-  // Group into columns keyed by topic
-  const columns = useMemo(() => {
-    const map = {};
-    for (const topic of topics) map[topic] = [];
-    for (const item of filteredItems) {
-      if (item.topic && map[item.topic]) {
-        map[item.topic].push(item);
-      }
-    }
-    return map;
-  }, [filteredItems, topics]);
+  return item.projectLink ? (
+    <a
+      href={item.projectLink}
+      target="_blank"
+      rel="noreferrer"
+      className={`${wrapperClass} transition-colors hover:bg-gray-200`}
+      aria-label={`Open ${item.displayTitle} project page`}
+    >
+      {placeholder}
+    </a>
+  ) : (
+    <div className={wrapperClass}>{placeholder}</div>
+  );
+};
+
+const ProjectCard = ({ project, displayTier = 'medium', priority = 'core', tileClass, showSecondaryPreview = false }) => {
+  const cardClass = priority === 'secondary'
+    ? 'border-gray-200 bg-white'
+    : 'border-gray-200 bg-white';
+
+  const titleClass = displayTier === 'hero' ? 'text-lg md:text-xl' : 'text-sm xl:text-base';
+  const imageClass = TIER_IMAGE_CLASS[displayTier] || TIER_IMAGE_CLASS.medium;
+  const fullTitle = project.title || project.displayTitle;
+  const hasShortDisplayTitle = project.displayTitle && project.displayTitle !== fullTitle;
+  const summary = project.desc || 'Project page and research resources are available through the external link.';
 
   return (
-    <div className="pt-[81px] w-full min-h-screen">
-      <div className="max-w-7xl mx-auto px-6 py-16">
+    <article className={`${tileClass || TIER_CLASS[displayTier] || TIER_CLASS.medium} flex h-full min-w-0 flex-col overflow-hidden rounded-lg border ${cardClass} shadow-sm transition-shadow hover:shadow-md`}>
+      <ProjectCover item={project} className={`${imageClass} w-full`} showSecondary={showSecondaryPreview} />
+      <div className="flex flex-1 flex-col p-3">
+        <div className="mb-2 flex min-h-9 flex-wrap content-start items-start gap-1.5 text-[10px] font-bold uppercase tracking-wider text-orange-600">
+          {hasShortDisplayTitle && (
+            <span className="rounded-full bg-orange-50 px-2 py-0.5 text-orange-700">{project.displayTitle}</span>
+          )}
+          {project.year && <span>{project.year}</span>}
+          {priority === 'secondary' && <span className="text-gray-400">Secondary</span>}
+        </div>
+        <h4 className={`${titleClass} min-h-[4.25rem] line-clamp-3 font-bold leading-snug [overflow-wrap:anywhere]`}>
+          {fullTitle}
+        </h4>
+        <p className="mt-2 min-h-10 text-xs leading-relaxed text-gray-500 line-clamp-2">
+          {summary}
+        </p>
+        <div className="mt-auto pt-4">
+          <ProjectActions item={project} />
+        </div>
+      </div>
+    </article>
+  );
+};
 
-        {/* Page header */}
-        <h1 className="text-4xl md:text-6xl font-bold mb-4">{title}</h1>
-        <p className="text-gray-500 mb-12">{description}</p>
+const MODULE_ORDER = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
 
-        {/* ── Year filter bar ── */}
-        {years.length > 1 && (
-          <div className="w-full border-b border-gray-200 mb-12">
-            <div className="flex flex-wrap gap-x-8">
-              {years.map((year) => (
-                <button
-                  key={year}
-                  onClick={() => setSelectedYear(year)}
-                  className={`pb-3 text-base font-medium transition-all relative
-                    ${
-                      selectedYear === year
-                        ? 'text-black'
-                        : 'text-gray-500 hover:text-gray-800'
-                    }`}
-                >
-                  {year}
-                  {selectedYear === year && (
-                    <div className="absolute bottom-0 left-0 w-full h-[2px] bg-orange-500 translate-y-[1px]" />
-                  )}
-                </button>
-              ))}
-            </div>
+const getVisibleModules = (direction, projectById) =>
+  direction.frameworkModules
+    .map((module) => ({
+      ...module,
+      projects: module.projects
+        .map((entry) => ({ ...entry, project: projectById.get(String(entry.id)) }))
+        .filter((entry) => entry.project),
+    }))
+    .filter((module) => module.projects.length > 0)
+    .sort((a, b) => MODULE_ORDER.indexOf(a.position) - MODULE_ORDER.indexOf(b.position));
+
+const getModuleGridClass = (projectCount) => {
+  if (projectCount >= 3) return 'xl:grid-cols-3';
+  if (projectCount === 2) return 'xl:grid-cols-2';
+  return 'grid-cols-1';
+};
+
+const getModuleTileClass = (module, moduleCount) => {
+  if (moduleCount === 1) return 'md:col-span-2';
+  if (moduleCount === 3 && module.position.startsWith('bottom')) return 'md:col-span-2';
+  return '';
+};
+
+const FrameworkModule = ({ module, moduleCount }) => (
+  <section
+    className={`${getModuleTileClass(module, moduleCount)} relative z-10 flex h-full flex-col rounded-xl border border-gray-200 bg-gray-50/90 p-3 shadow-sm md:p-4`}
+  >
+    <div className="mb-3 md:min-h-[74px]">
+      <div className="mb-2 flex flex-wrap items-center gap-2">
+        <span className="rounded-md bg-orange-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+          {module.label}
+        </span>
+        <span className="text-[10px] font-bold uppercase tracking-wider text-orange-600">
+          {module.projects.length} project{module.projects.length > 1 ? 's' : ''}
+        </span>
+      </div>
+      <h3 className="text-base font-bold leading-tight md:text-lg">{module.title}</h3>
+      {module.desc && <p className="mt-1 text-xs leading-relaxed text-gray-500 md:text-sm">{module.desc}</p>}
+    </div>
+
+    <div className={`grid flex-1 grid-cols-1 items-stretch gap-3 ${getModuleGridClass(module.projects.length)}`}>
+      {module.projects.map((entry) => (
+        <ProjectCard
+          key={entry.id}
+          project={entry.project}
+          displayTier={entry.displayTier}
+          priority={entry.priority}
+          tileClass={entry.tileClass}
+          showSecondaryPreview={module.projects.length === 1}
+        />
+      ))}
+    </div>
+  </section>
+);
+
+const DirectionPanel = ({ direction, projectById }) => {
+  const visibleModules = getVisibleModules(direction, projectById);
+  const projectCount = visibleModules.reduce((count, module) => count + module.projects.length, 0);
+
+  return (
+    <FadeInSection className="rounded-xl border border-gray-300 bg-white p-4 shadow-sm md:p-6">
+      <header className="flex flex-col gap-5 border-b border-gray-100 pb-5 lg:flex-row lg:items-start lg:justify-between">
+        <div className="max-w-3xl">
+          <div className="flex flex-wrap items-center gap-3">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-orange-600">Research Direction</p>
+            <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-gray-600">{projectCount} projects</span>
           </div>
-        )}
+          <h2 className="mt-2 text-2xl font-bold leading-tight md:text-3xl">{direction.topic}</h2>
+          <p className="mt-3 text-sm leading-relaxed text-gray-600">{direction.summary}</p>
+        </div>
 
-        {/* ── Three-column grid ── */}
-        {topics.length > 0 ? (
-          <div
-            className="grid gap-x-8 gap-y-0 items-start"
-            style={{
-              gridTemplateColumns: `repeat(${Math.min(topics.length, 3)}, minmax(0, 1fr))`,
-            }}
-          >
-            {topics.map((topic) => (
-              <div key={topic} className="flex flex-col">
-                {/* Column header — matches existing site style */}
-                <div className="mb-6">
-                  <h2 className="text-xl font-bold mb-2">{topic}</h2>
-                  <div className="h-[1px] bg-gray-300 rounded-full" />
-                </div>
+        <div className="flex max-w-xl flex-wrap gap-2 lg:justify-end">
+          {direction.keywords.map((keyword) => (
+            <span key={keyword} className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600">
+              {keyword}
+            </span>
+          ))}
+        </div>
+      </header>
 
-                {/* Cards stacked in column */}
-                <div className="flex flex-col gap-6">
-                  {columns[topic].length > 0 ? (
-                    columns[topic].map((item) => (
-                      <ResearchCard key={item.id} item={item} />
-                    ))
-                  ) : (
-                    <p className="text-gray-400 text-sm py-8 text-center">
-                      No items for {selectedYear}.
-                    </p>
-                  )}
-                </div>
-              </div>
-            ))}
+      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+        {visibleModules.map((module) => (
+          <FrameworkModule key={`${direction.id}-${module.position}`} module={module} moduleCount={visibleModules.length} />
+        ))}
+      </div>
+    </FadeInSection>
+  );
+};
+
+export const ResearchListPage = ({ title, description, items }) => {
+  const projectById = useMemo(() => {
+    const publicationProjects = items
+      .filter((item) => item.projectLink && item.projectLink.trim())
+      .map(normalizeProject);
+
+    const projects = [normalizeProject(SAT2CITY_V2), ...publicationProjects]
+      .filter((item) => RESEARCH_INCLUDE_IDS.has(item.id));
+
+    return new Map(projects.map((item) => [item.id, item]));
+  }, [items]);
+
+  return (
+    <div className="min-h-screen w-full bg-white">
+      <div className="mx-auto max-w-[1480px] px-6 py-12 md:py-14">
+        <FadeInSection className="mb-10">
+          <div className="max-w-4xl">
+            <p className="mb-3 text-xs font-bold uppercase tracking-[0.22em] text-orange-600">Research Map</p>
+            <h1 className="text-4xl font-bold tracking-tight md:text-6xl">{title}</h1>
+            <p className="mt-5 max-w-3xl text-base leading-relaxed text-gray-600 md:text-lg">{description}</p>
           </div>
-        ) : (
-          <div className="py-20 text-center text-gray-400">
-            No items found matching the selected filters.
-          </div>
-        )}
+        </FadeInSection>
+
+        <div className="grid gap-7">
+          {RESEARCH_MAP.map((direction) => (
+            <DirectionPanel key={direction.id} direction={direction} projectById={projectById} />
+          ))}
+        </div>
       </div>
     </div>
   );

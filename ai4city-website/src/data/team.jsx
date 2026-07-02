@@ -72,15 +72,15 @@ export const TEAM_DATA = {
 
   // 8. 校友 (Alumni)
   alu: [
-    { name: "Danyang Zhang", role: "Pre RA, now PhD at HKU", email: "zdy@gatech.edu", homepage: "", img: "/images/people/zhangdanyang.png" },
-    { name: "Hongrong Wang", role: "Pre RA, now Studying for Msc in CUHK(Shenzhen)", email: "b1520618977@163.com", homepage: "", img: "/images/people/wanghongrong.png" },
-    { name: "Zongrong Li", role: "Pre RA, now Phd at TAMU", email: "zongrongli@hkust-gz.edu.cn", homepage: "https://jasper0122.github.io/", img: "/images/people/Lizongrong.png" },
-    { name: "Zhongcheng Hong", role: "Pre RA, now Phd at Auckland University of Technology", email: "Zhongchengh@hkust-gz.edu.cn", homepage: "", img: "/images/people/HongZhongcheng.png" },
-    { name: "Ke Xu", role: "Pre RA, now Phd at HKUST", email: "kexu0501@gmail.com", homepage: "", img: "/images/people/xuke.png" },
-    { name: "Rui Zhang", role: "Pre RA, now European job-based doctoral program", email: "", homepage: "", img: "/images/people/zhangrui.png" },
-    { name: "Guanyu Hou", role: "Pre RA, now Phd at TAMU", email: "houguanyu21@gmail.com", homepage: "", img: "/images/people/houguanyu.png" },
-    { name: "Zhiyuan Xu", role: "Pre RA, now Phd at University of Bristol", email: "RenHonglin010407@163.com", homepage: "", img: "/images/people/profile.png" },
-    { name: "Juran Zhang", role: "Pre RA, now Working", email: "zhangjurann@gmail.com", homepage: "https://www.linkedin.com/in/juran-zhang", img: "/images/people/profile.png" },
-    { name: "Qican Weng", role: "Pre RA, now Working", email: "626710943@QQ.com", homepage: "", img: "/images/people/profile.png" }
+    { name: "Danyang Zhang", tenure: "25.11-26.6", role: "Pre RA, now PhD at HKU", email: "zdy@gatech.edu", homepage: "", img: "/images/people/zhangdanyang.png" },
+    { name: "Qican Weng", tenure: "25.10-26.4", role: "Pre RA, now Working", email: "626710943@QQ.com", homepage: "", img: "/images/people/profile.png" },
+    { name: "Rui Zhang", tenure: "25.1-25.7", role: "Pre RA, now European job-based doctoral program", email: "", homepage: "", img: "/images/people/zhangrui.png" },
+    { name: "Hongrong Wang", tenure: "24.12-25.8", role: "Pre RA, now Studying for Msc in CUHK(Shenzhen)", email: "b1520618977@163.com", homepage: "", img: "/images/people/wanghongrong.png" },
+    { name: "Ke Xu", tenure: "24.11-25.7", role: "Pre RA, now Phd at HKUST", email: "kexu0501@gmail.com", homepage: "", img: "/images/people/xuke.png" },
+    { name: "Zongrong Li", tenure: "24.7-25.7", role: "Pre RA, now Phd at TAMU", email: "zongrongli@hkust-gz.edu.cn", homepage: "https://jasper0122.github.io/", img: "/images/people/Lizongrong.png" },
+    { name: "Zhongcheng Hong", tenure: "24.7-25.7", role: "Pre RA, now Phd at Auckland University of Technology", email: "Zhongchengh@hkust-gz.edu.cn", homepage: "", img: "/images/people/HongZhongcheng.png" },
+    { name: "Guanyu Hou", tenure: "24.7-25.7", role: "Pre RA, now Phd at TAMU", email: "houguanyu21@gmail.com", homepage: "", img: "/images/people/houguanyu.png" },
+    { name: "Zhiyuan Xu", tenure: "24.4-24.8", role: "Pre RA, now Phd at University of Bristol", email: "RenHonglin010407@163.com", homepage: "", img: "/images/people/profile.png" },
+    { name: "Juran Zhang", tenure: "24.1-24.5", role: "Pre RA, now Working", email: "zhangjurann@gmail.com", homepage: "https://www.linkedin.com/in/juran-zhang", img: "/images/people/profile.png" }
   ]
 };

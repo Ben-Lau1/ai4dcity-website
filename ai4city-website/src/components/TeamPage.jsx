@@ -51,7 +51,7 @@ const SectionTitle = ({ children }) => (
 
 const AlumniRow = ({ member }) => (
   <FadeInSection className="border-b border-gray-200 last:border-b-0">
-    <div className="grid grid-cols-1 md:grid-cols-[minmax(160px,0.8fr)_minmax(0,2fr)_minmax(180px,0.9fr)] gap-2 md:gap-6 items-start py-4 md:py-5">
+    <div className="grid grid-cols-1 md:grid-cols-[minmax(150px,0.8fr)_minmax(100px,0.45fr)_minmax(0,2fr)_minmax(180px,0.9fr)] gap-2 md:gap-6 items-start py-4 md:py-5">
       <div className="min-w-0">
         {member.homepage ? (
           <a
@@ -66,6 +66,12 @@ const AlumniRow = ({ member }) => (
           <span className="font-semibold text-gray-900">{member.name}</span>
         )}
       </div>
+
+      {member.tenure && (
+        <span className="w-fit rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-600">
+          {member.tenure}
+        </span>
+      )}
 
       <p className="text-sm text-gray-600 leading-relaxed">{member.role}</p>
 

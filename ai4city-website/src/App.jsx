@@ -10,7 +10,6 @@ import { RESOURCES_LIST_ITEMS } from './data/resources';
 import { PublicationsListPage } from './components/PublicationsListPage';
 import { PUBLICATION_ITEMS } from './data/publications';
 import { ResearchListPage } from './components/ResearchListPage';
-import { RESEARCH_PROJECTS } from './data/research';
 import { ArticlePage } from './components/ArticlePage';
 import { DemoPage } from './components/DemoPage';
 
@@ -91,7 +90,7 @@ export default function App() {
             <ResearchListPage
               title="Research"
               description="Ongoing and recent projects across AI-driven urban modeling, spatiotemporal analysis, and built environment understanding."
-              items={RESEARCH_PROJECTS}
+              items={PUBLICATION_ITEMS}
               type="publication"
               originPage={originPage}
             />
