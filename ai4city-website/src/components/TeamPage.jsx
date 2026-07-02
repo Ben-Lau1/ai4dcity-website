@@ -49,6 +49,43 @@ const SectionTitle = ({ children }) => (
   <h2 className="text-2xl md:text-3xl font-bold mb-8 pl-4 border-l-4 border-black">{children}</h2>
 );
 
+const AlumniRow = ({ member }) => (
+  <FadeInSection className="border-b border-gray-200 last:border-b-0">
+    <div className="grid grid-cols-1 md:grid-cols-[minmax(160px,0.8fr)_minmax(0,2fr)_minmax(180px,0.9fr)] gap-2 md:gap-6 items-start py-4 md:py-5">
+      <div className="min-w-0">
+        {member.homepage ? (
+          <a
+            href={member.homepage}
+            target="_blank"
+            rel="noreferrer"
+            className="font-semibold text-gray-900 hover:text-blue-600 transition-colors"
+          >
+            {member.name}
+          </a>
+        ) : (
+          <span className="font-semibold text-gray-900">{member.name}</span>
+        )}
+      </div>
+
+      <p className="text-sm text-gray-600 leading-relaxed">{member.role}</p>
+
+      <div className="min-w-0 flex md:justify-end">
+        {member.email ? (
+          <a
+            href={`mailto:${member.email}`}
+            className="text-sm text-blue-500 flex items-center gap-1.5 hover:underline min-w-0"
+          >
+            <Mail size={14} className="shrink-0" />
+            <span className="truncate">{member.email}</span>
+          </a>
+        ) : (
+          <span className="hidden md:block text-sm text-gray-300">-</span>
+        )}
+      </div>
+    </div>
+  </FadeInSection>
+);
+
 /**
  * 团队页面组件
  * 已同步老页面的 PI 侧边吸顶布局和联系方式样式
@@ -163,8 +200,8 @@ export const TeamPage = () => {
         {alu && alu.length > 0 && (
           <div className="mb-20">
             <SectionTitle>Alumni</SectionTitle>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-              {alu.map((member, i) => <MemberCard key={i} member={member} isAlumni={true} />)}
+            <div className="border-t border-gray-200">
+              {alu.map((member) => <AlumniRow key={member.name} member={member} />)}
             </div>
           </div>
         )}

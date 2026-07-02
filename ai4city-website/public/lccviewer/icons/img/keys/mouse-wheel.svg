@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+  <!-- 鼠标主体 -->
+  <rect x="15" y="6" width="18" height="28" rx="9"/>
+  <!-- 中线分隔 -->
+  <line x1="24" y1="6" x2="24" y2="22"/>
+  <!-- 滚轮（描边线宽收窄，避免溢出） -->
+  <rect x="22.8" y="10.8" width="2.4" height="5.4" rx="1.2"/>
+  <!-- 上下箭头（缩放/俯仰） -->
+  <path d="M24 30 L24 26 M21 28 L24 25 L27 28"/>
+  <path d="M24 40 L24 44 M21 42 L24 45 L27 42"/>
+</svg>

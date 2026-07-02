@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>LCC Viewer</title>
+<!-- 自定义 favicon：小人图标（浅蓝渐变背景 + 白色轮廓） -->
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ====== Canvas Container ====== -->
+<div id="canvas-container">
+  <canvas id="render-canvas"></canvas>
+  <div id="loading-overlay" class="overlay">
+    <div class="loading-content">
+      <img src="icons/img/loading.svg" class="loading-spinner" alt="loading">
+      <div class="loading-text">加载场景中...</div>
+      <div class="loading-bar-track"><div class="loading-bar-fill" id="loading-bar"></div></div>
+      <div class="loading-percent" id="loading-percent">0%</div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== Top Toolbar ====== -->
+<div id="toolbar" class="toolbar">
+  <!-- Left group -->
+  <div class="toolbar-group toolbar-left">
+    <!-- View modes -->
+    <button class="tb-btn tb-btn-mode" data-mode="orbit" aria-label="自由视角" data-tooltip="自由视角">
+      <img src="icons/img/pivot_mode.svg" alt="自由">
+    </button>
+    <button class="tb-btn tb-btn-mode active" data-mode="firstPerson" aria-label="第一人称" data-tooltip="第一人称">
+      <img src="icons/img/first_person_view.svg" alt="第一人称">
+    </button>
+    <button class="tb-btn tb-btn-mode" data-mode="avatar" aria-label="第三人称" data-tooltip="第三人称">
+      <img src="icons/img/AvatarMode.svg" alt="第三人称">
+    </button>
+    <div class="tb-sep"></div>
+    <!-- Reset origin -->
+    <button class="tb-btn" id="btn-origin" aria-label="重置原点" data-tooltip="重置原点">
+      <img src="icons/img/origin_v2.svg" alt="原点">
+    </button>
+    <!-- Scene switch (动态填充选项) -->
+    <div class="tb-scene-wrap" id="tb-scene-wrap">
+      <button class="tb-btn" id="btn-scene" aria-label="切换场景" data-tooltip="切换场景">
+        <img src="icons/img/scene.svg" alt="场景">
+      </button>
+      <div class="tb-scene-menu" id="tb-scene-menu"></div>
+    </div>
+    <!-- Play/Pause -->
+    <button class="tb-btn" id="btn-play" aria-label="预览播放" data-tooltip="预览播放">
+      <img src="icons/img/play.svg" alt="播放" id="play-icon">
+    </button>
+  </div>
+  <!-- Right group -->
+  <div class="toolbar-group toolbar-right">
+    <!-- Help -->
+    <button class="tb-btn" id="btn-help" aria-label="帮助" data-tooltip="帮助">
+      <img src="icons/img/help_v2.svg" alt="帮助">
+    </button>
+    <!-- Settings -->
+    <button class="tb-btn" id="btn-settings" aria-label="设置" data-tooltip="设置">
+      <img src="icons/img/set_v2.svg" alt="设置">
+    </button>
+  </div>
+</div>
+
+
+
+<!-- ====== Settings Panel ====== -->
+<div id="settings-panel" class="panel settings-panel hidden">
+  <div class="panel-header">
+    <span>设置</span>
+    <button class="panel-close" data-panel="settings">&times;</button>
+  </div>
+  <div class="panel-body">
+    <!-- 通用 -->
+    <div class="setting-section">
+      <div class="setting-section-title">通用</div>
+      <div class="setting-item">
+        <span class="setting-item-label">碰撞</span>
+        <label class="setting-switch">
+          <input type="checkbox" id="setting-collision" checked>
+          <span class="setting-switch-track"></span>
+        </label>
+      </div>
+
+    </div>
+
+    <!-- 背景 -->
+    <div class="setting-section">
+      <div class="setting-section-title">背景</div>
+      <div class="setting-segment" id="setting-env">
+        <button class="active" data-value="dark">黑色</button>
+        <button data-value="sky">天空</button>
+      </div>
+    </div>
+
+    <!-- 渲染 -->
+    <div class="setting-section">
+      <div class="setting-section-title">渲染</div>
+      <div class="setting-dots" id="setting-quality">
+        <div class="setting-dots-line"></div>
+        <button data-value="0"><span class="setting-dot"></span><label>性能</label></button>
+        <button data-value="1"><span class="setting-dot"></span><label>流畅</label></button>
+        <button data-value="2"><span class="setting-dot"></span><label>平衡</label></button>
+        <button class="active" data-value="3"><span class="setting-dot"></span></button>
+        <button data-value="4"><span class="setting-dot"></span><label>质量</label></button>
+      </div>
+    </div>
+
+
+
+
+  </div>
+</div>
+
+<!-- ====== Help Overlay ====== -->
+<div id="help-overlay" class="help-overlay hidden">
+  <button class="help-x" id="help-x" aria-label="关闭">×</button>
+
+  <div class="help-content">
+    <header class="help-header">
+      <h2>操作介绍</h2>
+      <p>鼠标 · 键盘 · 触屏 · 按 <kbd>T</kbd> 键（移动端双击屏幕）回正视角</p>
+    </header>
+
+    <!-- 第 1 页：PC 键鼠 -->
+    <section class="help-page" data-page="1">
+      <!-- 鼠标操作区（3 个模式共享） -->
+      <div class="help-mouse-row">
+        <div class="help-mouse-item">
+          <img src="icons/img/keys/mouse-left.svg" class="help-mouse-icon">
+          <span class="help-mouse-desc">左键拖拽 · 旋转视角</span>
+        </div>
+        <div class="help-mouse-item">
+          <img src="icons/img/keys/mouse-right.svg" class="help-mouse-icon">
+          <span class="help-mouse-desc">右键拖拽 · 平移</span>
+        </div>
+        <div class="help-mouse-item">
+          <img src="icons/img/keys/mouse-wheel.svg" class="help-mouse-icon">
+          <span class="help-mouse-desc">滚轮 · 缩放</span>
+        </div>
+        <div class="help-mouse-item">
+          <img src="icons/img/keys/mouse-drag.svg" class="help-mouse-icon">
+          <span class="help-mouse-desc">自由视角 · 拖动观察</span>
+        </div>
+      </div>
+
+      <div class="help-grid">
+        <!-- 自由视角 -->
+        <div class="help-col">
+          <div class="help-col-title">
+            <img src="icons/img/pivot_mode.svg" alt="" class="help-col-icon">
+            <div>
+              <h3>自由视角</h3>
+              <p>环绕观察</p>
+            </div>
+          </div>
+          <ul class="help-ops">
+            <li>
+              <span class="key-group"><img src="icons/img/keys/key-t.svg" class="help-key"></span>
+              <span class="op-desc">回到轨迹起点</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- 第一人称 -->
+        <div class="help-col">
+          <div class="help-col-title">
+            <img src="icons/img/first_person_view.svg" alt="" class="help-col-icon">
+            <div>
+              <h3>第一人称</h3>
+              <p>沉浸式漫游</p>
+            </div>
+          </div>
+          <ul class="help-ops">
+            <li class="wasd-row">
+              <span class="key-group wasd"><img src="icons/img/keys/key-w.svg" class="help-key"><img src="icons/img/keys/key-a.svg" class="help-key"><img src="icons/img/keys/key-s.svg" class="help-key"><img src="icons/img/keys/key-d.svg" class="help-key"></span>
+              <span class="op-desc">移动</span>
+            </li>
+            <li>
+              <span class="key-group"><img src="icons/img/keys/key-q.svg" class="help-key"><img src="icons/img/keys/key-e.svg" class="help-key"></span>
+              <span class="op-desc">左右转头</span>
+            </li>
+            <li>
+              <span class="key-group"><img src="icons/img/keys/key-r.svg" class="help-key"><img src="icons/img/keys/key-f.svg" class="help-key"></span>
+              <span class="op-desc">抬头 / 低头</span>
+            </li>
+            <li>
+              <span class="key-group"><img src="icons/img/keys/key-shift.svg" class="help-key"></span>
+              <span class="op-desc">加速</span>
+            </li>
+            <li>
+              <span class="key-group"><img src="icons/img/keys/key-space.svg" class="help-key"></span>
+              <span class="op-desc">跳跃</span>
+            </li>
+            <li>
+              <span class="key-group"><img src="icons/img/keys/key-t.svg" class="help-key"></span>
+              <span class="op-desc">回到轨迹起点</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- 第三人称 -->
+        <div class="help-col">
+          <div class="help-col-title">
+            <img src="icons/img/AvatarMode.svg" alt="" class="help-col-icon">
+            <div>
+              <h3>第三人称</h3>
+              <p>跟随角色</p>
+            </div>
+          </div>
+          <ul class="help-ops">
+            <li class="wasd-row">
+              <span class="key-group wasd"><img src="icons/img/keys/key-w.svg" class="help-key"><img src="icons/img/keys/key-a.svg" class="help-key"><img src="icons/img/keys/key-s.svg" class="help-key"><img src="icons/img/keys/key-d.svg" class="help-key"></span>
+              <span class="op-desc">移动角色</span>
+            </li>
+            <li>
+              <span class="key-group"><img src="icons/img/keys/key-q.svg" class="help-key"><img src="icons/img/keys/key-e.svg" class="help-key"></span>
+              <span class="op-desc">左右转头</span>
+            </li>
+            <li>
+              <span class="key-group"><img src="icons/img/keys/key-r.svg" class="help-key"><img src="icons/img/keys/key-f.svg" class="help-key"></span>
+              <span class="op-desc">抬头 / 低头</span>
+            </li>
+            <li>
+              <span class="key-group"><img src="icons/img/keys/key-space.svg" class="help-key"></span>
+              <span class="op-desc">跳跃</span>
+            </li>
+            <li>
+              <span class="key-group"><img src="icons/img/keys/key-t.svg" class="help-key"></span>
+              <span class="op-desc">回正相机到背后</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 第 2 页：移动端 -->
+    <section class="help-page hidden" data-page="2">
+      <div class="help-mobile-grid">
+        <div class="help-mobile-item">
+          <div class="mobile-icon joy">
+            <svg viewBox="0 0 48 48" fill="none" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="24" cy="36" r="8"/>
+              <circle cx="24" cy="36" r="3" fill="white"/>
+              <path d="M24 6 L24 14 M21 9 L24 6 L27 9"/>
+              <path d="M6 36 L14 36 M9 33 L6 36 L9 39"/>
+              <path d="M42 36 L34 36 M39 33 L42 36 L39 39"/>
+            </svg>
+          </div>
+          <h3>虚拟摇杆</h3>
+          <p>屏幕左下角 · 任意方向移动</p>
+        </div>
+        <div class="help-mobile-item">
+          <div class="mobile-icon touch">
+            <svg viewBox="0 0 48 48" fill="none" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M24 10 L24 30"/>
+              <path d="M21 13 L24 10 L27 13"/>
+              <path d="M18 30 L24 36 L30 30"/>
+              <circle cx="24" cy="38" r="4" fill="white" fill-opacity="0.2"/>
+            </svg>
+          </div>
+          <h3>单指滑动</h3>
+          <p>屏幕任意位置 · 旋转视角</p>
+        </div>
+        <div class="help-mobile-item">
+          <div class="mobile-icon pinch">
+            <svg viewBox="0 0 48 48" fill="none" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M8 32 L18 22"/>
+              <path d="M5 29 L8 32 L11 29"/>
+              <path d="M40 16 L30 26"/>
+              <path d="M43 19 L40 16 L37 19"/>
+              <circle cx="20" cy="24" r="2" fill="white"/>
+              <circle cx="28" cy="24" r="2" fill="white"/>
+            </svg>
+          </div>
+          <h3>双指捏合</h3>
+          <p>两指张开 / 捏合 · 缩放</p>
+        </div>
+        <div class="help-mobile-item">
+          <div class="mobile-icon tap">
+            <svg viewBox="0 0 48 48" fill="none" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="18" y="18" width="12" height="12" rx="2" fill="white" fill-opacity="0.2"/>
+              <path d="M24 6 L24 14 M21 10 L24 7 L27 10"/>
+              <path d="M24 42 L24 34 M21 38 L24 41 L27 38"/>
+            </svg>
+          </div>
+          <h3>双击回正</h3>
+          <p>屏幕任意位置 · 快速点击两下</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 底部导航 -->
+    <footer class="help-footer">
+      <span class="help-page-indicator"><span id="help-cur">1</span> / 2</span>
+      <div class="help-nav">
+        <button class="help-nav-btn" id="help-prev" disabled>← 上一步</button>
+        <button class="help-nav-btn primary" id="help-next">下一步 →</button>
+        <button class="help-nav-btn primary hidden" id="help-close">知道了</button>
+      </div>
+    </footer>
+  </div>
+</div>
+
+<!-- ====== Virtual Joystick (Mobile) ====== -->
+<div id="joystick-zone" class="joystick-zone">
+  <div id="joystick-base" class="joystick-base">
+    <div id="joystick-thumb" class="joystick-thumb"></div>
+  </div>
+</div>
+
+<!-- ====== Jump Button (Mobile) ====== -->
+<button id="btn-jump" class="btn-jump">
+  <span class="jump-label">跳</span>
+</button>
+
+<!-- ====== Footer Info ====== -->
+<div id="footer" class="footer">
+  <span class="footer-item"><span class="footer-label">场景</span><span id="footer-scene-state" class="footer-val">—</span></span>
+  <span class="footer-sep"></span>
+  <span class="footer-item"><span class="footer-label">相机</span><span id="footer-camera-mode" class="footer-val">—</span></span>
+  <span class="footer-sep"></span>
+  <span class="footer-item"><span class="footer-label">SDK</span><span id="footer-version" class="footer-val">LCC Viewer 1.0</span></span>
+</div>
+
+<!-- ====== Scripts ====== -->
+<!-- Three.js v164 CJS build -->
+<script>var exports = {};</script>
+<script src="libs/three.cjs"></script>
+<script>window.THREE = exports; exports = undefined;</script>
+
+
+<!-- LCC SDK v0.6.1 UMD build — sets window.LCC.LCCRender -->
+<script src="libs/lcc-0.6.1.umd.js"></script>
+<script>window.LCCRender = LCC.LCCRender;</script>
+<script src="js/keyboard.js"></script>
+<script src="js/joystick.js"></script>
+<script src="js/touch.js"></script>
+<script src="js/CameraState.js"></script>
+<script src="js/InputSnapshot.js"></script>
+<script src="js/InputController.js"></script>
+<script src="js/collision.js"></script>
+<script src="js/camera-transition.js"></script>
+<script src="js/player.js"></script>
+<script src="js/trajectory-player.js"></script>
+<script src="js/scene.js"></script>
+<script src="js/lcc-loader.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>

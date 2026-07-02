@@ -2,9 +2,9 @@ import React, { useState, useMemo } from 'react';
 import { Database } from 'lucide-react';
 import { FadeInSection } from './FadeInSection';
 
-const RESOURCE_TYPES = ['All', 'Dataset', 'Open Package', 'Code(Github)'];
+const RESOURCE_TYPES = ['All', 'Demo', 'Dataset', 'Open Package', 'Code(Github)'];
 
-export const ResourcesListPage = ({ title, description, items, type = 'default' }) => {
+export const ResourcesListPage = ({ title, description, items }) => {
   const [selectedType,  setSelectedType]  = useState('All');
   const [selectedTopic, setSelectedTopic] = useState('All');
   const [selectedYear,  setSelectedYear]  = useState('All');

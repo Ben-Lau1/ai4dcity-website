@@ -1,5 +1,17 @@
 export const RESOURCES_LIST_ITEMS = [
   {
+    id: "lccviewer-demo",
+    title: "LCCViewer",
+    desc: "LCCViewer is an interactive web demo for exploring large-scale 3D city scenes. It runs as part of the AI4DCity website build, while the large scene data remains hosted under the same OBS bucket for efficient delivery.",
+    mediaType: "image",
+    mediaContent: "/lccviewer/textures/skybox/5.jpg",
+    link: "/lccviewer/index.html",
+    date: "Launch interactive viewer",
+    year: "2026",
+    resourceType: "Demo",
+    topic: "3D City Modeling"
+  },
+  {
     id: 1774850137756,
     title: "BuildingView-Turbo",
     desc: "Buildings provide unique insights into the urban environment, encompassing physical, functional, and aesthetic dimensions. Traditional approaches often rely on remote sensing (sky-view) or street-level imagery (street-view) for building information extraction but tend to focus on isolated perspectives. These methods limit the holistic understanding of urban morphology and functionality.\nBuildingView-Turbo addresses this gap by integrating sky-view and street-view imagery using advanced computational techniques. This novel framework enables the construction of a comprehensive, multi-city building database for deeper urban analysis.",

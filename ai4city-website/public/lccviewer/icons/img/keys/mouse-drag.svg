@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+  <defs>
+    <!-- 用鼠标轮廓作为裁剪区 -->
+    <clipPath id="body-clip">
+      <rect x="15" y="12" width="18" height="24" rx="9"/>
+    </clipPath>
+  </defs>
+  <!-- 左右键填色（用 clipPath 严格裁剪到轮廓内） -->
+  <g clip-path="url(#body-clip)">
+    <rect x="14" y="11" width="10" height="14" fill="white" fill-opacity="0.25"/>
+    <rect x="24" y="11" width="10" height="14" fill="white" fill-opacity="0.25"/>
+  </g>
+  <!-- 鼠标轮廓 -->
+  <rect x="15" y="12" width="18" height="24" rx="9"/>
+  <!-- 中线分隔左键/右键 -->
+  <line x1="24" y1="12" x2="24" y2="24"/>
+  <!-- 滚轮 -->
+  <rect x="22" y="15" width="4" height="6" rx="2"/>
+  <!-- 4 方向箭头（到主体边缘距离一致：4px） -->
+  <path d="M24 3 L24 9 M21 6 L24 3 L27 6"/>
+  <path d="M24 45 L24 39 M21 42 L24 45 L27 42"/>
+  <path d="M3 24 L9 24 M6 21 L3 24 L6 27"/>
+  <path d="M45 24 L39 24 M42 21 L45 24 L42 27"/>
+</svg>

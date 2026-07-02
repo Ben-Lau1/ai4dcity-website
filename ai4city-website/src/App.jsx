@@ -12,14 +12,32 @@ import { PUBLICATION_ITEMS } from './data/publications';
 import { ResearchListPage } from './components/ResearchListPage';
 import { RESEARCH_PROJECTS } from './data/research';
 import { ArticlePage } from './components/ArticlePage';
+import { DemoPage } from './components/DemoPage';
+
+const ROUTE_PAGES = new Set(['team', 'research', 'demo', 'publication', 'resources', 'about']);
+
+const getInitialPage = () => {
+  const path = window.location.pathname.replace(/^\/+|\/+$/g, '');
+  return ROUTE_PAGES.has(path) ? path : 'home';
+};
+
+const getPagePath = (page) => {
+  if (page === 'home') return '/';
+  return ROUTE_PAGES.has(page) ? `/${page}/` : `/${page}`;
+};
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState('home');
+  const [currentPage, setCurrentPage] = useState(getInitialPage);
   const [articleId, setArticleId] = useState(null);
   const [originPage, setOriginPage] = useState('home');
 
   useEffect(() => {
-    window.history.replaceState({ page: 'home', id: null }, '', '/');
+    const page = getInitialPage();
+    window.history.replaceState(
+      { page, id: null },
+      '',
+      getPagePath(page)
+    );
   }, []);
 
   useEffect(() => {
@@ -43,7 +61,7 @@ export default function App() {
   if (id !== null) setArticleId(id);
   
   // Push a history entry so the browser back button works
-  window.history.pushState({ page, id }, '', `/${page === 'home' ? '' : page}`);
+  window.history.pushState({ page, id }, '', getPagePath(page));
   window.scrollTo(0, 0);  // 加这一行
   };
 
@@ -103,6 +121,8 @@ export default function App() {
             />
           </div>
         );
+      case 'demo':
+        return <DemoPage />;
       case 'about':
         return (
           <div className="pt-[81px] w-full min-h-screen">

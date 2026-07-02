@@ -48,7 +48,6 @@ export const TEAM_DATA = {
     { name: "Wenbo Lv", role: "Spatiotemporal statistics, Remote sensing image processing", email: "lyu.geosocial@gmail.com", homepage: "https://spatlyu.github.io/", img: "/images/people/lvwenbo.png" },
     { name: "Yinrui Ren", role: "Deep learning and remote sensing image analysis", email: "2023025221@m.scnu.edu.com", homepage: "", img: "/images/people/renyanrui.png" },
     { name: "Shuxian Shi", role: "Remote sensing applications and urban environmental monitoring", email: "Shelly-Shi@outlook.comR", homepage: "", img: "/images/people/shishuxian.jpg" },
-    { name: "Danyang Zhang", role: "Computer vision; 3DGS; AI for City", email: "zdy@gatech.edu", homepage: "", img: "/images/people/zhangdanyang.png" },
     { name: "Hongye Hou", role: "3D vision, multi-model learning", email: "houhongye2001@stu.xjtu.edu.cn", homepage: "", img: "/images/people/houhongye.jpg" },
     { name: "Xiaoyu Li", role: "UAV remote sensing, environmental monitoring and LULC classification", email: "xiaoyu6936@gmail.com", homepage: "", img: "/images/people/lixiaoyu.png" },
     { name: "Qinghe Liu", role: "Intelligent point cloud processing", email: "liuqinghe@nwafu.edu.cn", homepage: "", img: "/images/people/profile.png" }
@@ -60,7 +59,7 @@ export const TEAM_DATA = {
     
     { name: "Hongyu Ye", role: "Spatial big data applications and 3D city modelling and simulation", email: "jackson513ye@qq.com", homepage: "https://www.redfish.space/", img: "/images/people/yehongyu.jpg" },
     { name: "Haoran Gong", role: "computer vision, point clouds, and 3D reconstruction", email: "gonghr@stu.xjtu.edu.cn", homepage: "", img: "/images/people/gonghaoran.jpg" },
-    { name: "Sihan Li", role: "GIS, Information Visualization", email: "15902090311@163.com", homepage: "", img: "/images/people/profile.png" },
+    { name: "Wanqi Liu", role: "Multimodal urban sensing, GeoAI", email: "w.liu.25@ucl.ac.uk", homepage: "", img: "/images/people/WanqiLiu.jpg" },
     { name: "Xuran Hu", role: "Intelligent interpretation of multimodal remote sensing data", email: "XuRanHu@stu.xidian.edu.cn", homepage: "xuran-hu.github.io", img: "/images/people/huxuran.jpg" }
   ],
 
@@ -73,6 +72,7 @@ export const TEAM_DATA = {
 
   // 8. 校友 (Alumni)
   alu: [
+    { name: "Danyang Zhang", role: "Pre RA, now PhD at HKU", email: "zdy@gatech.edu", homepage: "", img: "/images/people/zhangdanyang.png" },
     { name: "Hongrong Wang", role: "Pre RA, now Studying for Msc in CUHK(Shenzhen)", email: "b1520618977@163.com", homepage: "", img: "/images/people/wanghongrong.png" },
     { name: "Zongrong Li", role: "Pre RA, now Phd at TAMU", email: "zongrongli@hkust-gz.edu.cn", homepage: "https://jasper0122.github.io/", img: "/images/people/Lizongrong.png" },
     { name: "Zhongcheng Hong", role: "Pre RA, now Phd at Auckland University of Technology", email: "Zhongchengh@hkust-gz.edu.cn", homepage: "", img: "/images/people/HongZhongcheng.png" },
