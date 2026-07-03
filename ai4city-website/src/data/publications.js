@@ -123,6 +123,28 @@ export const PUBLICATION_ITEMS = [
     mediaContent: "/images/publication/SKYEVEN.png"
   },
   {
+    id: "holo360d",
+    title: "Holo360D: A Large-Scale Real-World Dataset with Continuous Trajectories for Advancing Panoramic 3D Reconstruction and Beyond",
+    desc: "Holo360D provides large-scale real-world panoramic captures paired with LiDAR-derived geometry, including meshes, point clouds, depth maps, and camera poses.",
+    topic: "AI based 3D City Modeling",
+    year: "2026",
+    date: "arXiv:2604.22482",
+    link: "https://arxiv.org/abs/2604.22482",
+    projectLink: "https://jou719.github.io/Holo360D_homepage/",
+    mediaContent: "/images/research/holo360d-cover.jpg"
+  },
+  {
+    id: "skylume",
+    title: "Beyond a Single Light: A Large-Scale Aerial Dataset for Urban Scene Reconstruction Under Varying Illumination",
+    desc: "SkyLume captures the same urban regions across multiple illumination periods, pairing five-direction UAV imagery with LiDAR-derived geometry for robust 3D reconstruction research.",
+    topic: "AI based 3D City Modeling",
+    year: "2026",
+    date: "arXiv:2512.14200",
+    link: "https://arxiv.org/abs/2512.14200",
+    projectLink: "https://zhuoxiaoli.github.io/skylume_page/",
+    mediaContent: "/images/research/skylume-teaser.jpg"
+  },
+  {
     id: 1774779504458,
     title: "BuildingMultiView: Powering Multi-Scale Building Characterization with Large Language Models and Multi-Perspective Imagery",
     desc: "Through meta-analysis, 11 key visual building attributes are identified; satellite and street-view imagery are then integrated and processed by fine-tuned large language models.",

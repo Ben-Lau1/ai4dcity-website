@@ -40,6 +40,13 @@ const PROJECT_PREVIEWS = {
   1774848031951: [
     '/images/publication/SKYEVEN.png',
   ],
+  holo360d: [
+    '/images/research/holo360d-cover.jpg',
+  ],
+  skylume: [
+    '/images/research/skylume-teaser.jpg',
+    '/images/research/skylume-pipeline.jpg',
+  ],
   1774779504458: [
     '/images/publication/微信图片_2026-03-29_181922_037.png',
     '/images/resource/BuildMulview.png',
@@ -70,6 +77,8 @@ const RESEARCH_INCLUDE_IDS = new Set([
   '2026004',
   '1774775739519',
   '1774848031951',
+  'holo360d',
+  'skylume',
   '1774779504458',
   '33',
   '4',
@@ -113,7 +122,11 @@ const RESEARCH_MAP = [
         label: 'Reconstruction',
         title: 'Dataset / 360 / Multi-view Reconstruction',
         desc: 'Benchmarks and multimodal datasets for robust 3D reconstruction.',
-        projects: [{ id: '1774848031951', displayTier: 'compact', priority: 'secondary' }],
+        projects: [
+          { id: '1774848031951', displayTier: 'compact', priority: 'secondary' },
+          { id: 'holo360d', displayTier: 'compact', priority: 'secondary' },
+          { id: 'skylume', displayTier: 'compact', priority: 'secondary' },
+        ],
       },
     ],
   },
@@ -205,6 +218,8 @@ const PROJECT_DISPLAY_TITLES = {
   2026004: 'BuildAnyPoint',
   1774775739519: 'DSTI-Net',
   1774848031951: 'SkyEvents',
+  holo360d: 'Holo360D',
+  skylume: 'SkyLume',
   1774779504458: 'BuildingMultiView',
   33: 'gdverse',
   4: 'ULSR-GS',
@@ -220,6 +235,8 @@ const PROJECT_VENUE_LABELS = {
   2026004: 'CVPR 2026',
   1774775739519: 'TGRS 2026',
   1774848031951: 'ICLR 2026',
+  holo360d: 'arXiv 2026',
+  skylume: 'arXiv 2026',
   1774779504458: 'JAG 2026',
   33: 'TGIS 2025',
   4: 'ISPRS J 2025',
