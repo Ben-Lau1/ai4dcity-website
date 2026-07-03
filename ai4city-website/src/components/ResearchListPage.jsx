@@ -113,25 +113,21 @@ const RESEARCH_MAP = [
       {
         position: 'bottom-left',
         label: 'Reconstruction',
-        title: 'Large-scale Scene 3D Reconstruction',
-        desc: 'Large-scale reconstruction methods and datasets across aerial, UAV, and terrestrial capture settings.',
-        subgroups: [
-          {
-            title: 'Aerial-view 3D Reconstruction',
-            desc: 'Aerial Gaussian reconstruction and UAV datasets for robust city-scale reconstruction.',
-            projects: [
-              { id: '4', displayTier: 'compact', priority: 'core' },
-              { id: '1774848031951', displayTier: 'compact', priority: 'secondary' },
-              { id: 'skylume', displayTier: 'compact', priority: 'secondary' },
-            ],
-          },
-          {
-            title: '360 / Terrestrial 3D Reconstruction',
-            desc: 'Panoramic and ground-view datasets for continuous trajectory 3D reconstruction.',
-            projects: [
-              { id: 'holo360d', displayTier: 'medium', priority: 'secondary' },
-            ],
-          },
+        title: 'Aerial-view 3D Reconstruction',
+        desc: 'Aerial Gaussian reconstruction and UAV datasets for robust city-scale reconstruction.',
+        projects: [
+          { id: '4', displayTier: 'compact', priority: 'core' },
+          { id: '1774848031951', displayTier: 'compact', priority: 'secondary' },
+          { id: 'skylume', displayTier: 'compact', priority: 'secondary' },
+        ],
+      },
+      {
+        position: 'bottom-right',
+        label: 'Reconstruction',
+        title: '360 / Terrestrial 3D Reconstruction',
+        desc: 'Panoramic and ground-view datasets for continuous trajectory 3D reconstruction.',
+        projects: [
+          { id: 'holo360d', displayTier: 'medium', priority: 'secondary' },
         ],
       },
     ],
@@ -350,9 +346,9 @@ const ProjectActions = ({ item }) => {
   );
 };
 
-const ProjectCover = ({ item, className = '', showSecondary = false }) => {
+const ProjectCover = ({ item, className = '', showExtra = false }) => {
   const previewImages = item.previewImages?.length ? item.previewImages : item.mediaContent ? [item.mediaContent] : [];
-  const visibleImages = showSecondary ? previewImages.slice(0, 2) : previewImages.slice(0, 1);
+  const visibleImages = showExtra ? previewImages.slice(0, 2) : previewImages.slice(0, 1);
   const hasImages = visibleImages.length > 0;
   const wrapperClass = hasImages
     ? `block overflow-hidden border-b border-gray-100 bg-white p-2 ${className}`
@@ -414,7 +410,7 @@ const ProjectCover = ({ item, className = '', showSecondary = false }) => {
   );
 };
 
-const ProjectCard = ({ project, displayTier = 'medium', priority = 'core', tileClass, showSecondaryPreview = false }) => {
+const ProjectCard = ({ project, displayTier = 'medium', priority = 'core', tileClass, showExtraPreview = false }) => {
   const cardClass = priority === 'secondary'
     ? 'border-gray-200 bg-white'
     : 'border-gray-200 bg-white';
@@ -426,13 +422,12 @@ const ProjectCard = ({ project, displayTier = 'medium', priority = 'core', tileC
 
   return (
     <article className={`${tileClass || TIER_CLASS[displayTier] || TIER_CLASS.medium} flex h-full min-w-0 flex-col overflow-hidden rounded-lg border ${cardClass} shadow-sm transition-shadow hover:shadow-md`}>
-      <ProjectCover item={project} className={`${imageClass} w-full`} showSecondary={showSecondaryPreview} />
+      <ProjectCover item={project} className={`${imageClass} w-full`} showExtra={showExtraPreview} />
       <div className="flex flex-1 flex-col p-3">
         <div className="mb-2 flex min-h-9 flex-wrap content-start items-start gap-1.5 text-[10px] font-bold uppercase tracking-wider text-orange-600">
           {project.venueLabel && (
             <span className="rounded-full bg-orange-50 px-2 py-0.5 text-orange-700">{project.venueLabel}</span>
           )}
-          {priority === 'secondary' && <span className="text-gray-400">Secondary</span>}
         </div>
         <h4 className={`${titleClass} min-h-[4.25rem] line-clamp-3 font-bold leading-snug [overflow-wrap:anywhere]`}>
           {fullTitle}
@@ -457,65 +452,24 @@ const resolveProjectEntries = (projects = [], projectById) =>
 
 const getVisibleModules = (direction, projectById) =>
   direction.frameworkModules
-    .map((module) => {
-      const subgroups = (module.subgroups || [])
-        .map((subgroup) => ({
-          ...subgroup,
-          projects: resolveProjectEntries(subgroup.projects, projectById),
-        }))
-        .filter((subgroup) => subgroup.projects.length > 0);
-      const projects = subgroups.length
-        ? subgroups.flatMap((subgroup) => subgroup.projects)
-        : resolveProjectEntries(module.projects, projectById);
-
-      return {
-        ...module,
-        projects,
-        subgroups,
-      };
-    })
+    .map((module) => ({
+      ...module,
+      projects: resolveProjectEntries(module.projects, projectById),
+    }))
     .filter((module) => module.projects.length > 0)
     .sort((a, b) => MODULE_ORDER.indexOf(a.position) - MODULE_ORDER.indexOf(b.position));
 
 const getModuleGridClass = (projectCount) => {
-  if (projectCount >= 3) return 'xl:grid-cols-3';
+  if (projectCount >= 3) return 'xl:grid-cols-2 2xl:grid-cols-3';
   if (projectCount === 2) return 'xl:grid-cols-2';
   return 'grid-cols-1';
 };
 
 const getModuleTileClass = (module, moduleCount) => {
-  if (module.subgroups?.length) return 'md:col-span-2';
   if (moduleCount === 1) return 'md:col-span-2';
   if (moduleCount === 3 && module.position.startsWith('bottom')) return 'md:col-span-2';
   return '';
 };
-
-const FrameworkSubgroup = ({ subgroup, isPrimary = false }) => (
-  <div className="flex min-w-0 flex-col rounded-lg border border-gray-200 bg-white/80 p-3">
-    <div className="mb-3 min-h-16">
-      <div className="mb-1 flex flex-wrap items-center gap-2">
-        <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-gray-600">
-          {subgroup.projects.length} project{subgroup.projects.length > 1 ? 's' : ''}
-        </span>
-      </div>
-      <h4 className="text-sm font-bold leading-tight md:text-base">{subgroup.title}</h4>
-      {subgroup.desc && <p className="mt-1 text-xs leading-relaxed text-gray-500">{subgroup.desc}</p>}
-    </div>
-
-    <div className={`grid flex-1 grid-cols-1 gap-3 ${isPrimary ? 'xl:grid-cols-3' : ''}`}>
-      {subgroup.projects.map((entry) => (
-        <ProjectCard
-          key={entry.id}
-          project={entry.project}
-          displayTier={entry.displayTier}
-          priority={entry.priority}
-          tileClass={entry.tileClass}
-          showSecondaryPreview={subgroup.projects.length === 1}
-        />
-      ))}
-    </div>
-  </div>
-);
 
 const FrameworkModule = ({ module, moduleCount }) => (
   <section
@@ -534,26 +488,18 @@ const FrameworkModule = ({ module, moduleCount }) => (
       {module.desc && <p className="mt-1 text-xs leading-relaxed text-gray-500 md:text-sm">{module.desc}</p>}
     </div>
 
-    {module.subgroups?.length ? (
-      <div className="grid flex-1 grid-cols-1 items-stretch gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)]">
-        {module.subgroups.map((subgroup, index) => (
-          <FrameworkSubgroup key={subgroup.title} subgroup={subgroup} isPrimary={index === 0} />
-        ))}
-      </div>
-    ) : (
-      <div className={`grid flex-1 grid-cols-1 items-stretch gap-3 ${getModuleGridClass(module.projects.length)}`}>
-        {module.projects.map((entry) => (
-          <ProjectCard
-            key={entry.id}
-            project={entry.project}
-            displayTier={entry.displayTier}
-            priority={entry.priority}
-            tileClass={entry.tileClass}
-            showSecondaryPreview={module.projects.length === 1}
-          />
-        ))}
-      </div>
-    )}
+    <div className={`grid flex-1 grid-cols-1 items-stretch gap-3 ${getModuleGridClass(module.projects.length)}`}>
+      {module.projects.map((entry) => (
+        <ProjectCard
+          key={entry.id}
+          project={entry.project}
+          displayTier={entry.displayTier}
+          priority={entry.priority}
+          tileClass={entry.tileClass}
+          showExtraPreview={module.projects.length === 1}
+        />
+      ))}
+    </div>
   </section>
 );
 
