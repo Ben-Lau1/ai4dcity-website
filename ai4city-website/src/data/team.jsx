@@ -61,15 +61,15 @@ export const TEAM_DATA = {
     { name: "Hongyu Ye", role: "Spatial big data applications and 3D city modelling and simulation", email: "jackson513ye@qq.com", homepage: "https://www.redfish.space/", img: "/images/people/yehongyu.jpg" },
     { name: "Haoran Gong", role: "computer vision, point clouds, and 3D reconstruction", email: "gonghr@stu.xjtu.edu.cn", homepage: "", img: "/images/people/gonghaoran.jpg" },
     { name: "Wanqi Liu", role: "Multimodal urban sensing, GeoAI", email: "w.liu.25@ucl.ac.uk", homepage: "", img: "/images/people/WanqiLiu.jpg" },
-    { name: "Xuran Hu", role: "Intelligent interpretation of multimodal remote sensing data", email: "XuRanHu@stu.xidian.edu.cn", homepage: "xuran-hu.github.io", img: "/images/people/huxuran.jpg" }
+    { name: "Xuran Hu", role: "Intelligent interpretation of multimodal remote sensing data", email: "XuRanHu@stu.xidian.edu.cn", homepage: "xuran-hu.github.io", img: "/images/people/huxuran.jpg" },
+    { name: "Tao Liu", role: "Geospatial Foundation Models, Remote Sensing Change Understanding, Multimodal Learning, Earth Surface Forecasting", email: "tao.liu@autuni.ac.nz", homepage: "", img: "/images/people/TaoLiu.jpg" }
   ],
 
   // 7. 访问学者 (Visiting Scholars)
   vsc: [
     { name: "Shaoqing Dai", role: "Spatial-temporal data analysis, geo-health, spatial statistics", email: "dsq1993qingge@163.com", homepage: "https://gisersqdai.top/mycv/", img: "/images/people/DaiShaoQing.png" },
     { name: "Ruqiao Jiang", role: "Big geodata processing", email: "jiangruqiao@gmail.com", homepage: "", img: "/images/people/JiangRuqiao.png" },
-    { name: "Xijing Huang", role: "Multi-agent social simulation, Agent-Based Modeling, Computational social science", email: "huangxijing3@foxmail.com", homepage: "", img: "/images/people/huangxijing.jpg" },
-    { name: "Tao Liu", role: "Geospatial Foundation Models, Remote Sensing Change Understanding, Multimodal Learning, Earth Surface Forecasting", email: "tao.liu@autuni.ac.nz", homepage: "", img: "/images/people/TaoLiu.jpg" }
+    { name: "Xijing Huang", role: "Multi-agent social simulation, Agent-Based Modeling, Computational social science", email: "huangxijing3@foxmail.com", homepage: "", img: "/images/people/huangxijing.jpg" }
   ],
 
   // 8. 校友 (Alumni)
