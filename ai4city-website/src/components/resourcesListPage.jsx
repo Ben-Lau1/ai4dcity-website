@@ -129,7 +129,17 @@ export const ResourcesListPage = ({ title, description, items }) => {
 
                 {/* Media */}
                 <div className="w-full md:w-1/3 aspect-video md:h-[250px] flex-shrink-0 bg-gray-100 rounded-lg overflow-hidden order-1 md:order-2">
-                  {item.mediaContent ? (
+                  {item.mediaType === 'video' && item.mediaContent ? (
+                    <video
+                      className="w-full h-full object-cover bg-black"
+                      controls
+                      muted
+                      playsInline
+                      preload="metadata"
+                    >
+                      <source src={item.mediaContent} type="video/mp4" />
+                    </video>
+                  ) : item.mediaContent ? (
                     <a href={item.link} target="_blank" rel="noreferrer" className="block w-full h-full">
                       <img
                         src={item.mediaContent}

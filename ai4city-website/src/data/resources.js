@@ -12,6 +12,30 @@ export const RESOURCES_LIST_ITEMS = [
     topic: "3D City Modeling"
   },
   {
+    id: "campus-navigation-demo",
+    title: "Campus 3D Navigation",
+    desc: "A 3D model application for campus navigation, supporting location search and route guidance across campus gates, roads, and indoor/outdoor destinations.",
+    mediaType: "video",
+    mediaContent: "/videos/resources/campus-navigation.mp4",
+    link: "/videos/resources/campus-navigation.mp4",
+    date: "3D model application demo",
+    year: "2026",
+    resourceType: "Demo",
+    topic: "3D City Modeling"
+  },
+  {
+    id: "campus-abm-mobility-demo",
+    title: "Campus Mobility Simulation Studio",
+    desc: "An agent-based modeling (ABM) application for simulating campus mobility over a 3D campus scene, including agents, roads, indoor spaces, and points of interest.",
+    mediaType: "video",
+    mediaContent: "/videos/resources/campus-abm-mobility.mp4",
+    link: "/videos/resources/campus-abm-mobility.mp4",
+    date: "3D model application demo",
+    year: "2026",
+    resourceType: "Demo",
+    topic: "3D City Modeling"
+  },
+  {
     id: 1774850137756,
     title: "BuildingView-Turbo",
     desc: "Buildings provide unique insights into the urban environment, encompassing physical, functional, and aesthetic dimensions. Traditional approaches often rely on remote sensing (sky-view) or street-level imagery (street-view) for building information extraction but tend to focus on isolated perspectives. These methods limit the holistic understanding of urban morphology and functionality.\nBuildingView-Turbo addresses this gap by integrating sky-view and street-view imagery using advanced computational techniques. This novel framework enables the construction of a comprehensive, multi-city building database for deeper urban analysis.",
