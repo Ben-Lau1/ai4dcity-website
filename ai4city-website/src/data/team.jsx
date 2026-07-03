@@ -74,7 +74,7 @@ export const TEAM_DATA = {
   alu: [
     { name: "Danyang Zhang", tenure: "Nov 2025 - Jun 2026", role: "Pre RA, now PhD at HKU", email: "zdy@gatech.edu", homepage: "", img: "/images/people/zhangdanyang.png" },
     { name: "Qican Weng", tenure: "Oct 2025 - Apr 2026", role: "Pre RA, now Working", email: "626710943@QQ.com", homepage: "", img: "/images/people/profile.png" },
-    { name: "Rui Zhang", tenure: "Jan 2025 - Jul 2025", role: "Pre RA, now European job-based doctoral program", email: "", homepage: "", img: "/images/people/zhangrui.png" },
+    { name: "Rui Zhang", tenure: "Jan 2025 - Jul 2025", role: "Pre RA, now PhD at Aarhus University", email: "", homepage: "", img: "/images/people/zhangrui.png" },
     { name: "Hongrong Wang", tenure: "Dec 2024 - Aug 2025", role: "Pre RA, now Studying for Msc in CUHK(Shenzhen)", email: "b1520618977@163.com", homepage: "", img: "/images/people/wanghongrong.png" },
     { name: "Ke Xu", tenure: "Nov 2024 - Jul 2025", role: "Pre RA, now Phd at HKUST", email: "kexu0501@gmail.com", homepage: "", img: "/images/people/xuke.png" },
     { name: "Zongrong Li", tenure: "Jul 2024 - Jul 2025", role: "Pre RA, now Phd at TAMU", email: "zongrongli@hkust-gz.edu.cn", homepage: "https://jasper0122.github.io/", img: "/images/people/Lizongrong.png" },
