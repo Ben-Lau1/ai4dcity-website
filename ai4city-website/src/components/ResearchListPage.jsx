@@ -175,7 +175,7 @@ const RESEARCH_MAP = [
       {
         position: 'top-right',
         label: 'Application',
-        title: 'Change Detection',
+        title: 'Change Detection & Monitoring',
         desc: 'Task-driven dynamic scene monitoring and change detection from multimodal observations.',
         projects: [{ id: '1774775739519', displayTier: 'medium', priority: 'core' }],
       },
