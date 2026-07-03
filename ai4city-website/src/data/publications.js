@@ -128,7 +128,7 @@ export const PUBLICATION_ITEMS = [
     desc: "Holo360D provides large-scale real-world panoramic captures paired with LiDAR-derived geometry, including meshes, point clouds, depth maps, and camera poses.",
     topic: "AI based 3D City Modeling",
     year: "2026",
-    date: "arXiv:2604.22482",
+    date: "ECCV 2026. arXiv:2604.22482",
     link: "https://arxiv.org/abs/2604.22482",
     projectLink: "https://jou719.github.io/Holo360D_homepage/",
     mediaContent: "/images/research/holo360d-cover.jpg"
@@ -139,7 +139,7 @@ export const PUBLICATION_ITEMS = [
     desc: "SkyLume captures the same urban regions across multiple illumination periods, pairing five-direction UAV imagery with LiDAR-derived geometry for robust 3D reconstruction research.",
     topic: "AI based 3D City Modeling",
     year: "2026",
-    date: "arXiv:2512.14200",
+    date: "ECCV 2026. arXiv:2512.14200",
     link: "https://arxiv.org/abs/2512.14200",
     projectLink: "https://zhuoxiaoli.github.io/skylume_page/",
     mediaContent: "/images/research/skylume-teaser.jpg"
