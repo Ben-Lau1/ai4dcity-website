@@ -57,7 +57,7 @@ export const AboutPage = (originPage = 'home') => {
                         {/* 研究方向大图 */}
                         <div className="w-full mb-24">
                             <div className="w-full bg-gray-50 rounded-2xl overflow-hidden border border-gray-200 shadow-sm">
-                                <img src="images/frontPage/research-field.jpg" className="w-full h-auto object-cover" alt="Research Diagram" />
+                                <img src="/images/frontPage/research-field.jpg" className="w-full h-auto object-cover" alt="Research Diagram" />
                             </div>
                             <p className="text-center text-sm text-gray-400 mt-3 italic">Overview of AI4City Lab Research Framework</p>
                         </div>
