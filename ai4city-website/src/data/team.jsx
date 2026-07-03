@@ -67,7 +67,8 @@ export const TEAM_DATA = {
   vsc: [
     { name: "Shaoqing Dai", role: "Spatial-temporal data analysis, geo-health, spatial statistics", email: "dsq1993qingge@163.com", homepage: "https://gisersqdai.top/mycv/", img: "/images/people/DaiShaoQing.png" },
     { name: "Ruqiao Jiang", role: "Big geodata processing", email: "jiangruqiao@gmail.com", homepage: "", img: "/images/people/JiangRuqiao.png" },
-    { name: "Xijing Huang", role: "Multi-agent social simulation, Agent-Based Modeling, Computational social science", email: "huangxijing3@foxmail.com", homepage: "", img: "/images/people/huangxijing.jpg" }
+    { name: "Xijing Huang", role: "Multi-agent social simulation, Agent-Based Modeling, Computational social science", email: "huangxijing3@foxmail.com", homepage: "", img: "/images/people/huangxijing.jpg" },
+    { name: "Tao Liu", role: "Geospatial Foundation Models, Remote Sensing Change Understanding, Multimodal Learning, Earth Surface Forecasting", email: "tao.liu@autuni.ac.nz", homepage: "", img: "/images/people/TaoLiu.jpg" }
   ],
 
   // 8. 校友 (Alumni)
