@@ -49,6 +49,7 @@ export const TEAM_DATA = {
     { name: "Yinrui Ren", role: "Deep learning and remote sensing image analysis", email: "2023025221@m.scnu.edu.com", homepage: "", img: "/images/people/renyanrui.png" },
     { name: "Shuxian Shi", role: "Remote sensing applications and urban environmental monitoring", email: "Shelly-Shi@outlook.comR", homepage: "", img: "/images/people/shishuxian.jpg" },
     { name: "Hongye Hou", role: "3D vision, multi-model learning", email: "houhongye2001@stu.xjtu.edu.cn", homepage: "", img: "/images/people/houhongye.jpg" },
+    { name: "Mengrui Yin", role: "3D Computer Vision", email: "mengruiyin6@gmail.com", homepage: "", img: "/images/people/MengruiYin.jpg" },
     { name: "Xiaoyu Li", role: "UAV remote sensing, environmental monitoring and LULC classification", email: "xiaoyu6936@gmail.com", homepage: "", img: "/images/people/lixiaoyu.png" },
     { name: "Qinghe Liu", role: "Intelligent point cloud processing", email: "liuqinghe@nwafu.edu.cn", homepage: "", img: "/images/people/profile.png" }
   ],
