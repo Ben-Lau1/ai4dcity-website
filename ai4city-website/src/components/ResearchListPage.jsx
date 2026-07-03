@@ -495,7 +495,7 @@ const FrameworkModule = ({ module, moduleCount }) => (
           {module.label}
         </span>
         <span className="text-[10px] font-bold uppercase tracking-wider text-orange-600">
-          {module.projects.length} project{module.projects.length > 1 ? 's' : ''}
+          {module.projects.length} highlight{module.projects.length > 1 ? 's' : ''}
         </span>
       </div>
       <h3 className="text-base font-bold leading-tight md:text-lg">{module.title}</h3>
@@ -527,7 +527,7 @@ const DirectionPanel = ({ direction, projectById }) => {
         <div className="max-w-3xl">
           <div className="flex flex-wrap items-center gap-3">
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-orange-600">Research Direction</p>
-            <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-gray-600">{projectCount} projects</span>
+            <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-gray-600">{projectCount} highlights</span>
           </div>
           <h2 className="mt-2 text-2xl font-bold leading-tight md:text-3xl">{direction.topic}</h2>
           <p className="mt-3 text-sm leading-relaxed text-gray-600">{direction.summary}</p>
