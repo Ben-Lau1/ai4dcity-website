@@ -37,6 +37,17 @@ export const PUBLICATION_ITEMS = [
     projectLink: "https://github.com/stscl/tEDM"
   },
   {
+    id: "gcmc-spatial-causality",
+    title: "Measuring Causal Strengths from Spatial Cross-Sectional Data with Geographical Cross Mapping Cardinality",
+    desc: "This work measures causal strengths from spatial cross-sectional data through geographical cross mapping cardinality, extending empirical dynamic modeling for spatial causal inference.",
+    topic: "Spatio-temporal (4D) Data Fusion",
+    year: "2026",
+    date: "International Journal of Geographical Information Science (IJGIS), 2026. DOI: 10.1080/13658816.2026.2687121",
+    link: "https://doi.org/10.1080/13658816.2026.2687121",
+    projectLink: "https://stscl.github.io/spEDM/articles/GCMC.html",
+    mediaContent: "/images/research/gcmc-causal-strengths.png"
+  },
+  {
     id: 2026002,
     title: "Revealing the Co-occurrence Patterns of Public Emotions from Social Media Data",
     desc: "Perceiving multidimensional emotions from social media data and analyzing their spatiotemporal dynamics constitute a significant topic at the intersection of geographic information science and social management.",
@@ -132,6 +143,17 @@ export const PUBLICATION_ITEMS = [
     link: "https://arxiv.org/abs/2604.22482",
     projectLink: "https://jou719.github.io/Holo360D_homepage/",
     mediaContent: "/images/research/holo360d-cover.jpg"
+  },
+  {
+    id: "eventvggt",
+    title: "EventVGGT: Exploring Cross-Modal Distillation for Consistent Event-based Depth Estimation",
+    desc: "EventVGGT models asynchronous event streams as continuous video sequences and distills spatio-temporal and multi-view geometric priors from image-based VGGT for consistent event-based depth estimation.",
+    topic: "AI based 3D City Modeling",
+    year: "2026",
+    date: "ECCV 2026. arXiv:2603.09385",
+    link: "https://arxiv.org/abs/2603.09385",
+    projectLink: "https://github.com/yinruiRen/EventVGGT",
+    mediaContent: "/images/research/eventvggt-teaser.jpg"
   },
   {
     id: "skylume",
