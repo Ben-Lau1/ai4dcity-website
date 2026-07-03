@@ -31,7 +31,32 @@ export const RESOURCES_LIST_ITEMS = [
     link: "https://github.com/Anthony-ECPKN/SkyEvent",
     date: "https://github.com/Anthony-ECPKN/SkyEvent",
     year: "2026",
-    resourceType: "Dataset"
+    resourceType: "Dataset",
+    topic: "3D City Modeling"
+  },
+  {
+    id: "holo360d-dataset",
+    title: "Holo360D: A Large-Scale Real-World Dataset with Continuous Trajectories for Advancing Panoramic 3D Reconstruction and Beyond",
+    desc: "Holo360D provides large-scale real-world panoramic captures paired with LiDAR-derived geometry, including meshes, point clouds, depth maps, and camera poses for 360 / terrestrial 3D reconstruction research.",
+    mediaType: "image",
+    mediaContent: "/images/research/holo360d-cover.jpg",
+    link: "https://jou719.github.io/Holo360D_homepage/",
+    date: "https://jou719.github.io/Holo360D_homepage/",
+    year: "2026",
+    resourceType: "Dataset",
+    topic: "3D City Modeling"
+  },
+  {
+    id: "skylume-dataset",
+    title: "SkyLume: A Large-Scale Aerial Dataset for Urban Scene Reconstruction Under Varying Illumination",
+    desc: "SkyLume captures the same urban regions across multiple illumination periods, pairing five-direction UAV imagery with LiDAR-derived geometry for aerial-view 3D reconstruction, novel view synthesis, and inverse rendering research.",
+    mediaType: "image",
+    mediaContent: "/images/research/skylume-teaser.jpg",
+    link: "https://zhuoxiaoli.github.io/skylume_page/",
+    date: "https://zhuoxiaoli.github.io/skylume_page/",
+    year: "2026",
+    resourceType: "Dataset",
+    topic: "3D City Modeling"
   },
   {
     id: 1774778474730,
