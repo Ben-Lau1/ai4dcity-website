@@ -120,22 +120,25 @@ const RESEARCH_MAP = [
   {
     id: 'spatiotemporal-fusion',
     topic: 'Spatio-temporal (4D) Data Fusion',
-    summary: 'Learning and analysis across space, time, and sensing modalities.',
-    keywords: ['Multimodal fusion', 'Semantic segmentation', 'Spatial causality', 'GeoAI'],
+    summary: 'Learning representations and semantics across point clouds, images, time, and urban observations.',
+    keywords: ['Point clouds', 'Multimodal fusion', 'Building attributes', 'Spatial causality'],
     frameworkModules: [
       {
         position: 'top-left',
         label: 'Representation',
-        title: 'Multimodal Change & Monitoring',
-        desc: 'Task-driven dynamic scene monitoring from multimodal observations.',
-        projects: [{ id: '1774775739519', displayTier: 'medium', priority: 'core' }],
+        title: 'Point Cloud Semantic Segmentation / Fusion',
+        desc: 'Point-cloud and multimodal semantic understanding through shared-private representation learning.',
+        projects: [{ id: '2026003', displayTier: 'medium', priority: 'core' }],
       },
       {
         position: 'top-right',
-        label: 'Representation',
-        title: 'Semantic Segmentation / Fusion',
-        desc: 'Interpretable shared-private multimodal decomposition and segmentation.',
-        projects: [{ id: '2026003', displayTier: 'medium', priority: 'core' }],
+        label: 'Semantics',
+        title: 'Building / Asset Understanding',
+        desc: 'Building-level attributes, semantic enrichment, and exterior database construction.',
+        projects: [
+          { id: '1774779504458', displayTier: 'medium', priority: 'core' },
+          { id: '1', displayTier: 'compact', priority: 'secondary' },
+        ],
       },
       {
         position: 'bottom-left',
@@ -159,8 +162,8 @@ const RESEARCH_MAP = [
   {
     id: 'urban-env',
     topic: 'Urban Env-Understanding',
-    summary: 'Interpreting built environments from multimodal urban observations.',
-    keywords: ['Street view', 'Building attributes', 'Cross-view', 'Urban perception'],
+    summary: 'Interpreting urban environments, changes, and applications from multimodal observations.',
+    keywords: ['Street view', 'Change detection', 'Cross-view', 'Urban applications'],
     frameworkModules: [
       {
         position: 'top-left',
@@ -171,13 +174,10 @@ const RESEARCH_MAP = [
       },
       {
         position: 'top-right',
-        label: 'Perception',
-        title: 'Building / Asset Understanding',
-        desc: 'Building-level attributes, semantic enrichment, and exterior database construction.',
-        projects: [
-          { id: '1774779504458', displayTier: 'medium', priority: 'core' },
-          { id: '1', displayTier: 'compact', priority: 'secondary' },
-        ],
+        label: 'Application',
+        title: 'Urban Change & Monitoring',
+        desc: 'Task-driven dynamic scene monitoring and change detection from multimodal observations.',
+        projects: [{ id: '1774775739519', displayTier: 'medium', priority: 'core' }],
       },
       {
         position: 'bottom-left',
@@ -212,6 +212,21 @@ const PROJECT_DISPLAY_TITLES = {
   1: 'BuildingView',
 };
 
+const PROJECT_VENUE_LABELS = {
+  'sat2city-v2': 'Preprint 2026',
+  'geoidentity-sat2street': 'ISPRS J 2026',
+  2026001: 'CEUS 2026',
+  2026003: 'CVPR Findings 2026',
+  2026004: 'CVPR 2026',
+  1774775739519: 'TGRS 2026',
+  1774848031951: 'ICLR 2026',
+  1774779504458: 'JAG 2026',
+  33: 'TGIS 2025',
+  4: 'ISPRS J 2025',
+  3: 'ICCV 2025',
+  1: 'SpatialDI 2025',
+};
+
 const TIER_CLASS = {
   hero: 'md:col-span-2',
   wide: 'md:col-span-2',
@@ -237,6 +252,7 @@ const normalizeProject = (item) => ({
   ...item,
   id: String(item.id),
   displayTitle: PROJECT_DISPLAY_TITLES[item.id] || item.displayTitle || item.title,
+  venueLabel: PROJECT_VENUE_LABELS[item.id] || item.venueLabel || item.year,
   previewImages: PROJECT_PREVIEWS[item.id] || (item.mediaContent ? [item.mediaContent] : []),
   mediaContent: PROJECT_PREVIEWS[item.id]?.[0] || item.mediaContent || null,
 });
@@ -383,7 +399,6 @@ const ProjectCard = ({ project, displayTier = 'medium', priority = 'core', tileC
   const titleClass = displayTier === 'hero' ? 'text-lg md:text-xl' : 'text-sm xl:text-base';
   const imageClass = TIER_IMAGE_CLASS[displayTier] || TIER_IMAGE_CLASS.medium;
   const fullTitle = project.title || project.displayTitle;
-  const hasShortDisplayTitle = project.displayTitle && project.displayTitle !== fullTitle;
   const summary = project.desc || 'Project page and research resources are available through the external link.';
 
   return (
@@ -391,10 +406,9 @@ const ProjectCard = ({ project, displayTier = 'medium', priority = 'core', tileC
       <ProjectCover item={project} className={`${imageClass} w-full`} showSecondary={showSecondaryPreview} />
       <div className="flex flex-1 flex-col p-3">
         <div className="mb-2 flex min-h-9 flex-wrap content-start items-start gap-1.5 text-[10px] font-bold uppercase tracking-wider text-orange-600">
-          {hasShortDisplayTitle && (
-            <span className="rounded-full bg-orange-50 px-2 py-0.5 text-orange-700">{project.displayTitle}</span>
+          {project.venueLabel && (
+            <span className="rounded-full bg-orange-50 px-2 py-0.5 text-orange-700">{project.venueLabel}</span>
           )}
-          {project.year && <span>{project.year}</span>}
           {priority === 'secondary' && <span className="text-gray-400">Secondary</span>}
         </div>
         <h4 className={`${titleClass} min-h-[4.25rem] line-clamp-3 font-bold leading-snug [overflow-wrap:anywhere]`}>
