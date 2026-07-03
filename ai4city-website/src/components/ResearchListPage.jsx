@@ -182,8 +182,8 @@ const RESEARCH_MAP = [
       {
         position: 'bottom-left',
         label: 'Application',
-        title: 'Urban Change / Resilience',
-        desc: 'Reserved for confirmed project pages on urban change, resilience, and disaster applications.',
+        title: 'Urban Resilience / Disaster Applications',
+        desc: 'Reserved for confirmed project pages on urban resilience and disaster applications.',
         projects: [],
       },
       {
