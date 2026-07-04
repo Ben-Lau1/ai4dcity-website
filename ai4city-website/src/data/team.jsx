@@ -67,6 +67,7 @@ export const TEAM_DATA = {
 
   // 7. 访问学者 (Visiting Scholars)
   vsc: [
+    { name: "Nianhua Liu", role: "Cartography and Human-Computer Interaction, Urban Mobility", email: "nianhua.liu@tum.de", homepage: "", img: "/images/people/NianhuaLiu.png" },
     { name: "Shaoqing Dai", role: "Spatial-temporal data analysis, geo-health, spatial statistics", email: "dsq1993qingge@163.com", homepage: "https://gisersqdai.top/mycv/", img: "/images/people/DaiShaoQing.png" },
     { name: "Ruqiao Jiang", role: "Big geodata processing", email: "jiangruqiao@gmail.com", homepage: "", img: "/images/people/JiangRuqiao.png" },
     { name: "Xijing Huang", role: "Multi-agent social simulation, Agent-Based Modeling, Computational social science", email: "huangxijing3@foxmail.com", homepage: "", img: "/images/people/huangxijing.jpg" }
