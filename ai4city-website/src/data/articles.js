@@ -1,6 +1,25 @@
 // src/data/articles.js
 
 export const ARTICLE_CONTENT = {
+  "global-south-geoai-symposium": {
+    title: "Successfully Held: GeoAI Symposium for Sustainable Cities in the Global South",
+    subtitle: "Data, Intelligence, and Interdisciplinary Perspectives",
+    date: "July 8, 2026",
+    site: "Lecture Hall C, HKUST(GZ)",
+    author: "AI4City Lab",
+    img: "",
+    abstract: "The GeoAI Symposium for Sustainable Cities in the Global South was successfully held at Lecture Hall C, HKUST(GZ), on July 8, 2026, from 13:00 to 17:30. The symposium brought together representatives from international organizations, leading universities, and professional institutions to discuss geospatial data, urban intelligence, climate resilience, and interdisciplinary governance for sustainable cities in the Global South.",
+    body: [
+      "On July 8, 2026, the GeoAI Symposium for Sustainable Cities in the Global South was successfully held at Lecture Hall C, HKUST(GZ). Organized by the Urban Governance and Design Thrust (UGOD), with support from the International Association for Spatial Methods and Harvard Spatial Data Lab, the symposium focused on data, intelligence, and interdisciplinary perspectives for sustainable urban development.",
+      "The event featured speakers and representatives from UN-Habitat, UN-GGKIC, UN-IFAD, leading international universities, and professional planning institutions. Discussions covered GeoAI for sustainable cities, geospatial data infrastructure, urban intelligence, climate resilience, localized practices in the Global South, and cross-disciplinary collaboration between AI, geography, urban planning, and social sciences."
+    ],
+    link: "https://mp.weixin.qq.com/s/Vg5rF8eV1WqMth92JO4EVQ",
+    details: [
+      { text: "Time: 13:00-17:30, July 8, 2026" },
+      { text: "Venue: Lecture Hall C, HKUST(GZ)" },
+      { text: "Organizer: Urban Governance and Design Thrust (UGOD), HKUST(GZ)" }
+    ]
+  },
   "eccv-2026-3d-reconstruction": {
     title: "Three papers on 3D city scene reconstruction accepted at ECCV 2026 — Congratulations to Zhuoxiao, Jing, and Yinrui!",
     subtitle: "Congratulations to Zhuoxiao, Jing, and Yinrui!",
