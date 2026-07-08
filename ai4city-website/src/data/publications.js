@@ -5,6 +5,59 @@
 
 export const PUBLICATION_ITEMS = [
   {
+    id: "urbanchange-multitask-land-cover",
+    title: "Towards comprehensive multi-task land cover change detection leveraging vision-language model and LLM-driven agents",
+    desc: "This work introduces UrbanChange, a multi-task dataset and framework for 2D and 3D land cover change detection using vision-language models and LLM-driven agents.",
+    topic: "Spatio-temporal (4D) Data Fusion",
+    year: "2026",
+    date: "ISPRS Journal of Photogrammetry and Remote Sensing, 2026. DOI: 10.1016/j.isprsjprs.2026.05.025",
+    link: "https://doi.org/10.1016/j.isprsjprs.2026.05.025"
+  },
+  {
+    id: "holo360d",
+    title: "Holo360D: A Large-Scale Real-World Dataset with Continuous Trajectories for Advancing Panoramic 3D Reconstruction and Beyond",
+    desc: "Holo360D provides large-scale real-world panoramic captures paired with LiDAR-derived geometry, including meshes, point clouds, depth maps, and camera poses.",
+    topic: "AI based 3D City Modeling",
+    year: "2026",
+    date: "ECCV 2026. arXiv:2604.22482",
+    link: "https://arxiv.org/abs/2604.22482",
+    projectLink: "https://jou719.github.io/Holo360D_homepage/",
+    mediaContent: "/images/research/holo360d-cover.jpg"
+  },
+  {
+    id: "eventvggt",
+    title: "EventVGGT: Exploring Cross-Modal Distillation for Consistent Event-based Depth Estimation",
+    desc: "EventVGGT models asynchronous event streams as continuous video sequences and distills spatio-temporal and multi-view geometric priors from image-based VGGT for consistent event-based depth estimation.",
+    topic: "AI based 3D City Modeling",
+    year: "2026",
+    date: "ECCV 2026. arXiv:2603.09385",
+    link: "https://arxiv.org/abs/2603.09385",
+    projectLink: "https://github.com/yinruiRen/EventVGGT",
+    mediaContent: "/images/research/eventvggt-teaser.jpg"
+  },
+  {
+    id: "skylume",
+    title: "Beyond a Single Light: A Large-Scale Aerial Dataset for Urban Scene Reconstruction Under Varying Illumination",
+    desc: "SkyLume captures the same urban regions across multiple illumination periods, pairing five-direction UAV imagery with LiDAR-derived geometry for robust 3D reconstruction research.",
+    topic: "AI based 3D City Modeling",
+    year: "2026",
+    date: "ECCV 2026. arXiv:2512.14200",
+    link: "https://arxiv.org/abs/2512.14200",
+    projectLink: "https://zhuoxiaoli.github.io/skylume_page/",
+    mediaContent: "/images/research/skylume-teaser.jpg"
+  },
+  {
+    id: "sat2city-v2",
+    title: "Sat2City v2: Native 3D City Asset Generation from a Single Satellite Image",
+    desc: "Sat2City v2 generates explicit city-scale geometry and satellite-consistent textured mesh assets from a single satellite image.",
+    topic: "AI based 3D City Modeling",
+    year: "2026",
+    date: "Pre-print, 2026. arXiv:2606.24138",
+    link: "https://arxiv.org/abs/2606.24138",
+    projectLink: "https://ai4city-hkust.github.io/Sat2City-v2/",
+    mediaContent: "/images/research/project-pages/sat2city-v2.png"
+  },
+  {
     id: "geoidentity-sat2street",
     title: "Bridging street view coverage disparities through geographic identity preserving generation from satellite view",
     desc: "Street view imagery (SVI) provides a human-centric view of urban environments, but its coverage is highly uneven. We propose GeoIdentity-Sat2Street, a geographic identity preserving framework that leverages satellite imagery to expand street view coverage.",
@@ -132,39 +185,6 @@ export const PUBLICATION_ITEMS = [
     wechatLink: "https://mp.weixin.qq.com/s/_cf9EJeoPL79Duzh_zgmjg",
     projectLink: "https://anthony-ecpkn.github.io/SkyEvent.github.io/",
     mediaContent: "/images/publication/SKYEVEN.png"
-  },
-  {
-    id: "holo360d",
-    title: "Holo360D: A Large-Scale Real-World Dataset with Continuous Trajectories for Advancing Panoramic 3D Reconstruction and Beyond",
-    desc: "Holo360D provides large-scale real-world panoramic captures paired with LiDAR-derived geometry, including meshes, point clouds, depth maps, and camera poses.",
-    topic: "AI based 3D City Modeling",
-    year: "2026",
-    date: "ECCV 2026. arXiv:2604.22482",
-    link: "https://arxiv.org/abs/2604.22482",
-    projectLink: "https://jou719.github.io/Holo360D_homepage/",
-    mediaContent: "/images/research/holo360d-cover.jpg"
-  },
-  {
-    id: "eventvggt",
-    title: "EventVGGT: Exploring Cross-Modal Distillation for Consistent Event-based Depth Estimation",
-    desc: "EventVGGT models asynchronous event streams as continuous video sequences and distills spatio-temporal and multi-view geometric priors from image-based VGGT for consistent event-based depth estimation.",
-    topic: "AI based 3D City Modeling",
-    year: "2026",
-    date: "ECCV 2026. arXiv:2603.09385",
-    link: "https://arxiv.org/abs/2603.09385",
-    projectLink: "https://github.com/yinruiRen/EventVGGT",
-    mediaContent: "/images/research/eventvggt-teaser.jpg"
-  },
-  {
-    id: "skylume",
-    title: "Beyond a Single Light: A Large-Scale Aerial Dataset for Urban Scene Reconstruction Under Varying Illumination",
-    desc: "SkyLume captures the same urban regions across multiple illumination periods, pairing five-direction UAV imagery with LiDAR-derived geometry for robust 3D reconstruction research.",
-    topic: "AI based 3D City Modeling",
-    year: "2026",
-    date: "ECCV 2026. arXiv:2512.14200",
-    link: "https://arxiv.org/abs/2512.14200",
-    projectLink: "https://zhuoxiaoli.github.io/skylume_page/",
-    mediaContent: "/images/research/skylume-teaser.jpg"
   },
   {
     id: 1774779504458,
