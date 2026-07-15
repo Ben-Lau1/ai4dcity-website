@@ -59,6 +59,7 @@ export const TEAM_DATA = {
     { name: "Bingchen Li", role: "Urban Economics & Regional Economics", email: "bingchen054@gmail.com", homepage: "", img: "/images/people/libingchen.png" },
     
     { name: "Hongyu Ye", role: "Spatial big data applications and 3D city modelling and simulation", email: "jackson513ye@qq.com", homepage: "https://www.redfish.space/", img: "/images/people/yehongyu.jpg" },
+    { name: "Hongyu Yao", role: "Remote sensing image processing and Spatial-temporal data analysis", email: "yoyojusto@163.com", homepage: "", img: "/images/people/HongyuYao.jpg" },
     { name: "Haoran Gong", role: "computer vision, point clouds, and 3D reconstruction", email: "gonghr@stu.xjtu.edu.cn", homepage: "", img: "/images/people/gonghaoran.jpg" },
     { name: "Wanqi Liu", role: "Multimodal urban sensing, GeoAI", email: "w.liu.25@ucl.ac.uk", homepage: "", img: "/images/people/WanqiLiu.jpg" },
     { name: "Xuran Hu", role: "Intelligent interpretation of multimodal remote sensing data", email: "XuRanHu@stu.xidian.edu.cn", homepage: "xuran-hu.github.io", img: "/images/people/huxuran.jpg" },
