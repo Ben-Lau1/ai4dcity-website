@@ -1,0 +1,66 @@
+<view class="viewer-shell">
+  <canvas
+    id="native-canvas"
+    class="viewer-canvas"
+    type="webgl"
+    bindtouchstart="handleTouchStart"
+    catchtouchmove="handleTouchMove"
+    bindtouchend="handleTouchEnd"
+    bindtouchcancel="handleTouchEnd"
+  ></canvas>
+
+  <view
+    wx:if="{{phase === 'ready'}}"
+    class="move-touch-zone"
+    catchtouchstart="handleMoveStart"
+    catchtouchmove="handleMoveMove"
+    catchtouchend="handleMoveEnd"
+    catchtouchcancel="handleMoveEnd"
+  >
+    <view
+      wx:if="{{joystickActive}}"
+      class="joystick-base"
+      style="left: {{joystickCenterX}}px; top: {{joystickCenterY}}px;"
+    >
+      <view
+        class="joystick-thumb"
+        style="transform: translate(calc(-50% + {{joystickThumbX}}px), calc(-50% + {{joystickThumbY}}px));"
+      ></view>
+    </view>
+  </view>
+
+  <view
+    wx:if="{{phase === 'ready' && activeMode !== 'orbit'}}"
+    class="jump-button {{jumpActive ? 'active' : ''}}"
+    catchtouchstart="handleJumpStart"
+    catchtouchend="handleJumpEnd"
+    catchtouchcancel="handleJumpEnd"
+  >↑</view>
+
+  <view class="topbar">
+    <view class="brand">LCCViewer</view>
+    <view class="runtime-state">
+      <view class="state-dot {{phase}}"></view>
+      <text>{{statusText}}</text>
+    </view>
+  </view>
+
+  <view wx:if="{{loading}}" class="loading-layer">
+    <view class="loading-spinner"></view>
+    <text class="loading-percent">{{progress}}%</text>
+  </view>
+
+  <view wx:if="{{errorDetail}}" class="error-strip">
+    <text>{{errorDetail}}</text>
+  </view>
+
+  <view wx:if="{{phase !== 'error'}}" class="mode-bar">
+    <button
+      wx:for="{{modes}}"
+      wx:key="id"
+      class="mode-button {{activeMode === item.id ? 'active' : ''}}"
+      data-mode="{{item.id}}"
+      bindtap="selectMode"
+    >{{item.label}}</button>
+  </view>
+</view>

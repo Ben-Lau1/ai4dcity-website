@@ -1,0 +1,296 @@
+<view class="viewer-shell">
+  <canvas id="native-v2-canvas" class="viewer-canvas" type="webgl"></canvas>
+
+  <view
+    wx:if="{{phase === 'ready'}}"
+    class="look-touch-zone"
+    catchtouchstart="handleLookStart"
+    catchtouchmove="handleLookMove"
+    catchtouchend="handleLookEnd"
+    catchtouchcancel="handleLookEnd"
+  ></view>
+
+  <view
+    wx:if="{{phase === 'ready'}}"
+    class="move-touch-zone"
+    catchtouchstart="handleMoveStart"
+    catchtouchmove="handleMoveMove"
+    catchtouchend="handleMoveEnd"
+    catchtouchcancel="handleMoveEnd"
+  >
+    <view class="joystick-rest {{joystickActive ? 'hidden' : ''}}">
+      <view class="joystick-rest-thumb"></view>
+    </view>
+    <view
+      wx:if="{{joystickActive}}"
+      class="joystick-base"
+      style="left: {{joystickCenterX}}px; top: {{joystickCenterY}}px;"
+    >
+      <view
+        class="joystick-thumb"
+        style="transform: translate(calc(-50% + {{joystickThumbX}}px), calc(-50% + {{joystickThumbY}}px));"
+      ></view>
+    </view>
+  </view>
+
+  <view wx:if="{{phase === 'ready'}}" class="toolbar" style="top: {{headerTop}}px;">
+    <view class="toolbar-group">
+      <button
+        wx:for="{{modes}}"
+        wx:key="id"
+        class="toolbar-button {{activeMode === item.id ? 'active' : ''}}"
+        data-mode="{{item.id}}"
+        bindtap="selectMode"
+        hover-class="control-hover"
+        aria-label="{{item.label}}"
+      >
+        <image class="toolbar-icon" src="{{item.icon}}" mode="aspectFit"></image>
+      </button>
+      <view class="toolbar-separator"></view>
+      <button class="toolbar-button" bindtap="resetCamera" hover-class="control-hover" aria-label="重置原点">
+        <image class="toolbar-icon" src="/native-v2/assets/ui/origin.svg" mode="aspectFit"></image>
+      </button>
+      <button
+        class="toolbar-button {{sceneMenuOpen ? 'active' : ''}}"
+        bindtap="toggleSceneMenu"
+        hover-class="control-hover"
+        aria-label="切换场景"
+      >
+        <image class="toolbar-icon" src="/native-v2/assets/ui/scene.svg" mode="aspectFit"></image>
+      </button>
+      <button
+        class="toolbar-button {{trajectoryPlaying ? 'active' : ''}}"
+        bindtap="toggleTrajectory"
+        hover-class="control-hover"
+        aria-label="{{trajectoryPlaying ? '暂停轨迹' : '播放轨迹'}}"
+      >
+        <image
+          class="toolbar-icon"
+          src="{{trajectoryPlaying ? '/native-v2/assets/ui/pause.svg' : '/native-v2/assets/ui/play.svg'}}"
+          mode="aspectFit"
+        ></image>
+      </button>
+    </view>
+    <view class="toolbar-group">
+      <button
+        class="toolbar-button {{helpOpen ? 'active' : ''}}"
+        bindtap="toggleHelp"
+        hover-class="control-hover"
+        aria-label="帮助"
+      >
+        <image class="toolbar-icon" src="/native-v2/assets/ui/help.svg" mode="aspectFit"></image>
+      </button>
+      <button
+        class="toolbar-button {{settingsOpen ? 'active' : ''}}"
+        bindtap="toggleSettings"
+        hover-class="control-hover"
+        aria-label="设置"
+      >
+        <image class="toolbar-icon" src="/native-v2/assets/ui/settings.svg" mode="aspectFit"></image>
+      </button>
+    </view>
+  </view>
+
+  <view
+    wx:if="{{phase === 'ready' && sceneMenuOpen}}"
+    class="panel-shade scene-shade"
+    catchtap="closeSceneMenu"
+  ></view>
+  <view
+    wx:if="{{phase === 'ready' && sceneMenuOpen}}"
+    class="scene-menu"
+    style="top: {{panelTop}}px;"
+    catchtap="swallowTap"
+  >
+    <view class="scene-current">
+      <view class="scene-title-row">
+        <view class="scene-dot"></view>
+        <text class="scene-current-title">{{activeSceneLabel}}</text>
+      </view>
+      <text class="scene-description">LCC2 高斯场景 · 原生 WebGL2 渲染</text>
+      <text class="scene-status">{{statusText}}</text>
+    </view>
+    <view class="scene-divider"></view>
+    <text class="scene-list-title">选择场景</text>
+    <button
+      wx:for="{{scenes}}"
+      wx:key="id"
+      class="scene-item {{activeSceneId === item.id ? 'active' : ''}}"
+      data-scene-id="{{item.id}}"
+      bindtap="switchScene"
+      hover-class="control-hover"
+    >
+      <view class="scene-item-dot"></view>
+      <text>{{item.label}}</text>
+    </button>
+  </view>
+
+  <view wx:if="{{loading}}" class="loading-layer">
+    <view class="loading-spinner"></view>
+    <text class="loading-scene">{{activeSceneLabel}}</text>
+    <text class="loading-status">{{statusText}}</text>
+    <view class="progress-track">
+      <view class="progress-fill" style="width: {{progress}}%;"></view>
+    </view>
+    <text class="loading-percent">{{progress}}%</text>
+  </view>
+
+  <view wx:if="{{phase === 'error'}}" class="error-layer">
+    <view class="error-dialog">
+      <text class="error-title">原生渲染不可用</text>
+      <text class="error-detail">{{errorDetail}}</text>
+      <button class="retry-button" bindtap="retryLoad" hover-class="control-hover">重试</button>
+    </view>
+  </view>
+
+  <view wx:if="{{phase === 'ready' && errorDetail}}" class="warning-strip">
+    <text>{{errorDetail}}</text>
+  </view>
+
+  <view
+    wx:if="{{phase === 'ready' && diagnosticsVisible}}"
+    class="diagnostics"
+    style="top: {{panelTop + 4}}px;"
+  >
+    <view class="metric"><text class="metric-value">{{fps}}</text><text class="metric-label">FPS</text></view>
+    <view class="metric"><text class="metric-value">{{gpuTimeText}}</text><text class="metric-label">GPU</text></view>
+    <view class="metric"><text class="metric-value">{{cpuTimeText}}</text><text class="metric-label">CPU</text></view>
+    <text class="diagnostic-line">{{sortState}} · {{sortResults}}/{{sortRequests}} · {{splatCountText}}</text>
+    <text class="diagnostic-line secondary">{{renderPathText}} · S{{sampleStrideText}} · V{{visibleRatioText}} · C{{lodCacheText}}</text>
+  </view>
+
+  <button
+    wx:if="{{phase === 'ready'}}"
+    class="sprint-button {{sprintEnabled ? 'active' : ''}}"
+    bindtap="toggleSprint"
+    hover-class="control-hover"
+    aria-label="{{sprintEnabled ? '关闭移动加速' : '开启移动加速'}}"
+  >
+    <image class="action-icon" src="/native-v2/assets/ui/sprint.svg" mode="aspectFit"></image>
+  </button>
+
+  <button
+    wx:if="{{phase === 'ready' && activeMode !== 'orbit'}}"
+    class="jump-button {{jumpActive ? 'active' : ''}}"
+    catchtouchstart="handleJumpStart"
+    catchtouchend="handleJumpEnd"
+    catchtouchcancel="handleJumpEnd"
+    aria-label="跳跃"
+  >
+    <image class="action-icon" src="/native-v2/assets/ui/jump.svg" mode="aspectFit"></image>
+  </button>
+
+  <view wx:if="{{phase === 'ready'}}" class="viewer-footer">
+    <view class="footer-item"><text class="footer-label">场景</text><text class="footer-value">{{activeSceneLabel}}</text></view>
+    <view class="footer-separator"></view>
+    <view class="footer-item">
+      <text class="footer-label">相机</text>
+      <text wx:if="{{activeMode === 'orbit'}}" class="footer-value">自由</text>
+      <text wx:elif="{{activeMode === 'firstPerson'}}" class="footer-value">第一人称</text>
+      <text wx:else class="footer-value">第三人称</text>
+    </view>
+    <view class="footer-separator"></view>
+    <view class="footer-item"><text class="footer-label">SDK</text><text class="footer-value">LCC Viewer 1.0</text></view>
+  </view>
+
+  <view
+    wx:if="{{phase === 'ready' && settingsOpen}}"
+    class="panel-shade"
+    catchtap="closeSettings"
+  ></view>
+  <view
+    wx:if="{{phase === 'ready' && settingsOpen}}"
+    class="settings-panel"
+    style="top: {{panelTop}}px;"
+    catchtap="swallowTap"
+  >
+    <view class="panel-header">
+      <text class="panel-title">设置</text>
+      <button class="panel-close" bindtap="closeSettings" hover-class="control-hover" aria-label="关闭设置">
+        <image class="close-icon" src="/native-v2/assets/ui/close.svg" mode="aspectFit"></image>
+      </button>
+    </view>
+    <view class="settings-section">
+      <text class="settings-section-title">通用</text>
+      <view class="settings-row">
+        <text class="settings-row-label">碰撞与地面贴合</text>
+        <switch checked="{{collisionEnabled}}" bindchange="toggleCollision" color="#4facfe" aria-label="碰撞与地面贴合"></switch>
+      </view>
+      <view class="settings-row speed-row">
+        <text class="settings-row-label">移动加速</text>
+        <switch checked="{{sprintEnabled}}" bindchange="handleSprintChange" color="#4facfe" aria-label="移动加速"></switch>
+      </view>
+    </view>
+    <view class="settings-section">
+      <text class="settings-section-title">背景</text>
+      <view class="settings-segment">
+        <button
+          wx:for="{{environments}}"
+          wx:key="id"
+          class="settings-segment-button {{environment === item.id ? 'active' : ''}}"
+          data-environment="{{item.id}}"
+          bindtap="selectEnvironment"
+          hover-class="control-hover"
+        >{{item.label}}</button>
+      </view>
+    </view>
+    <view class="settings-section">
+      <view class="quality-heading">
+        <text class="settings-section-title">高斯细粒度</text>
+        <text class="quality-current">{{qualityLabel}}</text>
+      </view>
+      <view class="quality-control">
+        <button
+          wx:for="{{qualityOptions}}"
+          wx:key="id"
+          class="quality-button {{qualityLevel === item.id ? 'active' : ''}}"
+          data-quality="{{item.id}}"
+          bindtap="selectQuality"
+          hover-class="control-hover"
+        >
+          <view class="quality-dot"></view>
+          <text>{{item.label}}</text>
+        </button>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{phase === 'ready' && helpOpen}}" class="help-overlay" catchtap="closeHelp">
+    <view class="help-content" catchtap="swallowTap">
+      <view class="panel-header help-header">
+        <view>
+          <text class="panel-title">操作介绍</text>
+          <text class="help-subtitle">触屏浏览与角色控制</text>
+        </view>
+        <button class="panel-close" bindtap="closeHelp" hover-class="control-hover" aria-label="关闭帮助">
+          <image class="close-icon" src="/native-v2/assets/ui/close.svg" mode="aspectFit"></image>
+        </button>
+      </view>
+      <view class="help-grid">
+        <view class="help-item">
+          <image class="help-icon" src="/native-v2/assets/ui/joystick.svg" mode="aspectFit"></image>
+          <view><text class="help-item-title">虚拟摇杆</text><text class="help-item-text">左下角拖动，按镜头方向移动</text></view>
+        </view>
+        <view class="help-item">
+          <image class="help-icon" src="/native-v2/assets/ui/touch.svg" mode="aspectFit"></image>
+          <view><text class="help-item-title">单指滑动</text><text class="help-item-text">屏幕右侧拖动，旋转观察方向</text></view>
+        </view>
+        <view class="help-item">
+          <image class="help-icon" src="/native-v2/assets/ui/pinch.svg" mode="aspectFit"></image>
+          <view><text class="help-item-title">双指捏合</text><text class="help-item-text">自由及第三人称模式调整距离</text></view>
+        </view>
+        <view class="help-item">
+          <image class="help-icon" src="/native-v2/assets/ui/origin.svg" mode="aspectFit"></image>
+          <view><text class="help-item-title">双击回正</text><text class="help-item-text">第三人称回到人物背后，其余模式返回轨迹起点</text></view>
+        </view>
+      </view>
+      <view class="help-divider"></view>
+      <view class="help-mode-list">
+        <view class="help-mode"><image src="/native-v2/assets/ui/mode-orbit.svg" mode="aspectFit"></image><text>自由视角 · 环绕观察与缩放</text></view>
+        <view class="help-mode"><image src="/native-v2/assets/ui/mode-first-person.svg" mode="aspectFit"></image><text>第一人称 · 移动、转向与跳跃</text></view>
+        <view class="help-mode"><image src="/native-v2/assets/ui/mode-avatar.svg" mode="aspectFit"></image><text>第三人称 · 角色跟随、移动动画与跳跃</text></view>
+      </view>
+      <text class="help-note">轨迹播放期间会锁定手动控制；再次点击播放按钮即可暂停。</text>
+    </view>
+  </view>
+</view>

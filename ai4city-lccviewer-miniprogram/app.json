@@ -1,12 +1,25 @@
 {
   "pages": [
-    "pages/index/index"
+    "pages/launch/index"
   ],
+  "subpackages": [
+    {
+      "root": "native-v2",
+      "name": "native-viewer-v2",
+      "pages": [
+        "index/index"
+      ]
+    }
+  ],
+  "workers": "workers",
   "window": {
     "navigationBarTitleText": "LCCViewer",
     "navigationBarBackgroundColor": "#111827",
     "navigationBarTextStyle": "white",
     "backgroundColor": "#000000"
+  },
+  "networkTimeout": {
+    "request": 120000
   },
   "sitemapLocation": "sitemap.json"
 }

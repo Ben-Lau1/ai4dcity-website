@@ -1,0 +1,3 @@
+<view class="launch-screen">
+  <view class="launch-spinner"></view>
+</view>

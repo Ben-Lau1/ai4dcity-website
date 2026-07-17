@@ -1,0 +1,22 @@
+.launch-screen {
+  align-items: center;
+  background: #090b0f;
+  display: flex;
+  height: 100vh;
+  justify-content: center;
+}
+
+.launch-spinner {
+  animation: spin 0.8s linear infinite;
+  border: 4rpx solid rgba(255, 255, 255, 0.18);
+  border-radius: 50%;
+  border-top-color: #54d6a0;
+  height: 48rpx;
+  width: 48rpx;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

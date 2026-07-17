@@ -1,11 +1,11 @@
 {
   "miniprogramRoot": "./",
   "compileType": "miniprogram",
-  "appid": "touristappid",
+  "appid": "wxbad82ea1621498bf",
   "projectname": "ai4dcity-lccviewer-miniprogram",
-  "description": "A WebView wrapper for the AI4DCity LCCViewer H5 demo.",
+  "description": "Native WeChat Mini Program prototype for the AI4DCity LCCViewer.",
   "setting": {
-    "urlCheck": false,
+    "urlCheck": true,
     "es6": true,
     "postcss": true,
     "minified": true,
@@ -31,7 +31,16 @@
   },
   "simulatorPluginLibVersion": {},
   "packOptions": {
-    "ignore": [],
+    "ignore": [
+      { "type": "folder", "value": "native" },
+      { "type": "folder", "value": "vendor" },
+      { "type": "folder", "value": "scripts" },
+      { "type": "folder", "value": "tools" },
+      { "type": "folder", "value": "pages/index" },
+      { "type": "file", "value": "workers/lcc-bvh.js" },
+      { "type": "file", "value": "workers/lcc-cpu-sort.js" },
+      { "type": "file", "value": "workers/lcc-modern-sort.js" }
+    ],
     "include": []
   },
   "editorSetting": {}
