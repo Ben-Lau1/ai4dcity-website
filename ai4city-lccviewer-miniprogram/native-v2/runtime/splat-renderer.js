@@ -106,7 +106,7 @@ void main() {
     gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
     return;
   }
-  int sourceOrder = order * uIndexStride;
+  int sourceOrder = order;
   ivec2 orderUv = ivec2(sourceOrder % uIndexWidth, sourceOrder / uIndexWidth);
   uint index = texelFetch(uIndexes, orderUv, 0).r;
   ivec2 uv = ivec2(int(index) % uTextureWidth, int(index) / uTextureWidth);
@@ -346,7 +346,7 @@ void main() {
     gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
     return;
   }
-  int sourceOrder = order * uIndexStride;
+  int sourceOrder = order;
   ivec2 orderUv = ivec2(sourceOrder % uIndexWidth, sourceOrder / uIndexWidth);
   uint index = texelFetch(uIndexes, orderUv, 0).r;
   ivec2 uv = ivec2(int(index) % uTextureWidth, int(index) / uTextureWidth);
@@ -756,7 +756,7 @@ class SplatRenderer {
     this.indexCount = 0;
     this.indexStride = Math.max(
       1,
-      Math.min(8, Math.floor(Number(options.indexStride) || 1)),
+      Math.min(12, Math.floor(Number(options.indexStride) || 1)),
     );
     this.sampleOpacityGrowth = Number.isFinite(options.sampleOpacityGrowth)
       ? Math.max(0, Number(options.sampleOpacityGrowth))
@@ -1009,7 +1009,7 @@ class SplatRenderer {
     gl.uniform1i(this.uniforms.uTextureWidth, this.textureWidth);
     gl.uniform1i(this.uniforms.uIndexWidth, this.indexWidth);
     gl.uniform1i(this.uniforms.uCount, this.count);
-    gl.uniform1i(this.uniforms.uIndexStride, this.indexStride);
+    gl.uniform1i(this.uniforms.uIndexStride, 1);
     gl.uniform1f(this.uniforms.uSampleCompensation, this.sampleCompensation());
     gl.uniform1f(this.uniforms.uSampleFootprintScale, this.sampleFootprintScale());
     gl.uniform3fv(this.uniforms.uMeansMin, scene.sog.meta.means.mins);
@@ -1160,7 +1160,7 @@ class SplatRenderer {
       gl.uniform1i(this.fastUniforms.uTextureWidth, this.textureWidth);
       gl.uniform1i(this.fastUniforms.uIndexWidth, this.indexWidth);
       gl.uniform1i(this.fastUniforms.uCount, this.count);
-      gl.uniform1i(this.fastUniforms.uIndexStride, this.indexStride);
+      gl.uniform1i(this.fastUniforms.uIndexStride, 1);
       gl.uniform1f(this.fastUniforms.uSampleCompensation, this.sampleCompensation());
       gl.uniform1f(this.fastUniforms.uSampleFootprintScale, this.sampleFootprintScale());
       this.bindTexture(0, this.decodedTextures[0], this.fastUniforms.uDecodedA);
@@ -1205,16 +1205,15 @@ class SplatRenderer {
     if (!program || !uniforms) return;
     const gl = this.gl;
     gl.useProgram(program);
-    gl.uniform1i(uniforms.uIndexStride, this.indexStride);
+    gl.uniform1i(uniforms.uIndexStride, 1);
     gl.uniform1f(uniforms.uSampleCompensation, this.sampleCompensation());
     gl.uniform1f(uniforms.uSampleFootprintScale, this.sampleFootprintScale());
   }
 
   setIndexStride(stride) {
-    const normalized = Math.max(1, Math.min(8, Math.floor(Number(stride) || 1)));
+    const normalized = Math.max(1, Math.min(12, Math.floor(Number(stride) || 1)));
     if (normalized === this.indexStride) return false;
     this.indexStride = normalized;
-    this.setRendererCount(Math.ceil(this.indexCount / this.indexStride));
     this.applySamplingUniforms(this.program, this.uniforms);
     this.applySamplingUniforms(this.fastProgram, this.fastUniforms);
     this.applySamplingUniforms(this.projectionSourceProgram, this.projectionSourceUniforms);
@@ -1243,7 +1242,7 @@ class SplatRenderer {
 
   setActiveIndexCount(count) {
     this.indexCount = Math.max(0, Math.floor(Number(count) || 0));
-    this.setRendererCount(Math.ceil(this.indexCount / this.indexStride));
+    this.setRendererCount(this.indexCount);
   }
 
   ensureIndexTexture(uploadIndex) {
@@ -1298,13 +1297,36 @@ class SplatRenderer {
       if (options.onCommitted) options.onCommitted();
       return;
     }
+    let sampledIndexes = indexes;
+    if (this.indexStride > 1) {
+      let sampledCount = 0;
+      for (let item = 0; item < indexes.length; item += 1) {
+        if (indexes[item] % this.indexStride === 0) sampledCount += 1;
+      }
+      if (sampledCount !== indexes.length) {
+        const sampled = new Uint32Array(sampledCount);
+        let target = 0;
+        for (let item = 0; item < indexes.length; item += 1) {
+          const sourceIndex = indexes[item];
+          if (sourceIndex % this.indexStride !== 0) continue;
+          sampled[target] = sourceIndex;
+          target += 1;
+        }
+        sampledIndexes = sampled;
+      }
+    }
+    if (!sampledIndexes.length) {
+      this.setActiveIndexCount(0);
+      if (options.onCommitted) options.onCommitted();
+      return;
+    }
     const uploadIndex = this.hasIndexData
       ? 1 - this.activeIndexTexture
       : this.activeIndexTexture;
     this.pendingIndexUpload = {
-      count: indexes.length,
-      indexes,
-      totalRows: Math.ceil(indexes.length / this.indexWidth),
+      count: sampledIndexes.length,
+      indexes: sampledIndexes,
+      totalRows: Math.ceil(sampledIndexes.length / this.indexWidth),
       uploadedRows: 0,
       uploadIndex,
       onCommitted: options.onCommitted || null,
@@ -1401,7 +1423,7 @@ class SplatRenderer {
       gl.uniform1i(uniforms.uTextureWidth, this.textureWidth);
       gl.uniform1i(uniforms.uIndexWidth, this.indexWidth);
       gl.uniform1i(uniforms.uCount, this.count);
-      gl.uniform1i(uniforms.uIndexStride, this.indexStride);
+      gl.uniform1i(uniforms.uIndexStride, 1);
       gl.uniform1f(uniforms.uSampleCompensation, this.sampleCompensation());
       gl.uniform1f(uniforms.uSampleFootprintScale, this.sampleFootprintScale());
       gl.uniform1i(uniforms.uTransformPass, 1);

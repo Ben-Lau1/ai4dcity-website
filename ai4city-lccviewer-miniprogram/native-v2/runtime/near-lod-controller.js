@@ -108,7 +108,7 @@ class NearLodController {
     this.sortController = options.sortController;
     this.samplingStride = Math.max(
       1,
-      Math.min(8, Math.floor(Number(options.samplingStride) || 1)),
+      Math.min(12, Math.floor(Number(options.samplingStride) || 1)),
     );
     this.onActiveCount = options.onActiveCount || null;
     this.onStatus = options.onStatus || null;
@@ -171,7 +171,7 @@ class NearLodController {
   }
 
   setSamplingStride(stride) {
-    const normalized = Math.max(1, Math.min(8, Math.floor(Number(stride) || 1)));
+    const normalized = Math.max(1, Math.min(12, Math.floor(Number(stride) || 1)));
     if (normalized === this.samplingStride) return false;
     this.samplingStride = normalized;
     if (this.baseRenderer && this.baseRenderer.setIndexStride) {
@@ -188,6 +188,7 @@ class NearLodController {
         state.renderer.setIndexStride(detailStride);
       }
     });
+    this.applySelection();
     if (this.onActiveCount) {
       let activeCount = this.baseRenderer ? this.baseRenderer.count : 0;
       this.activeRenderFileIds.forEach((fileId) => {
@@ -227,17 +228,11 @@ class NearLodController {
   sortCameraForFile(fileId, requestedCamera) {
     const camera = requestedCamera || this.currentCamera;
     if (!camera) return null;
-    if (FULL_RESIDENT_MODE
-      && !this.residentModeDegraded
-      && !this.residentReady
-      && this.residentFileIds.has(String(fileId))) {
-      return {
-        ...camera,
-        predictedForward: camera.forward.slice(),
-        cullToFrustum: false,
-      };
-    }
-    return camera;
+    return {
+      ...camera,
+      predictedForward: camera.forward.slice(),
+      cullToFrustum: false,
+    };
   }
 
   shouldPrepareFastPath(fileId) {
@@ -346,11 +341,20 @@ class NearLodController {
   }
 
   selectNodes(camera, visibleNodes) {
+    const previous = new Set(this.selectedIds);
+    const exitRadiusSq = DETAIL_RADIUS * DETAIL_RADIUS * 1.21;
     const candidates = (visibleNodes || []).map((node) => ({
       node,
       distanceSq: distanceToBoundsSquared(camera.position, node.bounds),
-    })).filter((candidate) => candidate.distanceSq <= DETAIL_RADIUS * DETAIL_RADIUS)
-      .sort((left, right) => left.distanceSq - right.distanceSq);
+    })).filter((candidate) => candidate.distanceSq <= (
+      previous.has(candidate.node.id)
+        ? exitRadiusSq
+        : DETAIL_RADIUS * DETAIL_RADIUS
+    )).sort((left, right) => {
+      const leftScore = left.distanceSq * (previous.has(left.node.id) ? 0.8 : 1);
+      const rightScore = right.distanceSq * (previous.has(right.node.id) ? 0.8 : 1);
+      return leftScore - rightScore;
+    });
     const selected = [];
     let points = 0;
     candidates.forEach((candidate) => {
@@ -363,18 +367,23 @@ class NearLodController {
   }
 
   selectFineRanges(camera, selectedNodes) {
+    const previous = new Set(this.selectedFineIds);
+    const exitRadiusSq = FINE_DETAIL_RADIUS * FINE_DETAIL_RADIUS * 1.21;
     let points = (selectedNodes || []).reduce((sum, node) => sum + pointCount(node), 0);
     const candidates = [];
     (selectedNodes || []).forEach((node) => {
       (node.detail || []).forEach((range, rangeIndex) => {
         if (!range.bounds || !range.finer || !range.finer.length) return;
         const distanceSq = distanceToBoundsSquared(camera.position, range.bounds);
-        if (distanceSq > FINE_DETAIL_RADIUS * FINE_DETAIL_RADIUS) return;
+        const id = `${node.id}/${range.id || rangeIndex}`;
+        if (distanceSq > (previous.has(id)
+          ? exitRadiusSq
+          : FINE_DETAIL_RADIUS * FINE_DETAIL_RADIUS)) return;
         const finerCount = rangePointCount(range.finer);
         const delta = finerCount - range.count;
         if (delta <= 0) return;
         candidates.push({
-          id: `${node.id}/${range.id || rangeIndex}`,
+          id,
           parentId: node.id,
           range,
           distanceSq,
@@ -382,7 +391,11 @@ class NearLodController {
         });
       });
     });
-    candidates.sort((left, right) => left.distanceSq - right.distanceSq);
+    candidates.sort((left, right) => {
+      const leftScore = left.distanceSq * (previous.has(left.id) ? 0.8 : 1);
+      const rightScore = right.distanceSq * (previous.has(right.id) ? 0.8 : 1);
+      return leftScore - rightScore;
+    });
     const selected = [];
     candidates.forEach((candidate) => {
       if (points + candidate.delta > DETAIL_POINT_BUDGET) return;
@@ -587,7 +600,7 @@ class NearLodController {
     const sourceBaseVersion = useResidentBase
       ? `resident:${this.residentBaseIndexesVersion}`
       : `sorted:${this.baseIndexesVersion}`;
-    const baseKey = `${sourceBaseVersion}/${baseRangesSignature}`;
+    const baseKey = `${sourceBaseVersion}/${baseRangesSignature}/s${this.samplingStride}`;
     if (sourceBaseIndexes && baseKey !== this.baseAppliedKey) {
       const filterScratch = this.baseFilterScratch;
       this.baseFilterScratch = null;
@@ -651,6 +664,8 @@ class NearLodController {
     Object.keys(this.states).forEach((fileId) => {
       const state = this.states[fileId];
       if (!state.renderer || !state.sortedIndexes) return;
+      const detailStride = this.detailSamplingStride();
+      if (state.renderer.setIndexStride) state.renderer.setIndexStride(detailStride);
       const ranges = rangesByFile[fileId] || [];
       const rangeSignature = rangesSignature(ranges);
       const rangesChanged = rangeSignature !== state.appliedRangesSignature;
@@ -659,7 +674,7 @@ class NearLodController {
       const sourceVersion = useResident
         ? `resident:${state.residentVersion}`
         : `sorted:${state.sortedVersion}`;
-      const stateKey = `${sourceVersion}/${rangeSignature}`;
+      const stateKey = `${sourceVersion}/${rangeSignature}/s${detailStride}`;
       if (stateKey !== state.appliedKey) {
         if (!ranges.length) {
           this.cancelIndexFilter(`detail:${fileId}`);
@@ -727,9 +742,6 @@ class NearLodController {
         state.appliedRangesSignature = rangeSignature;
       }
       if (ranges.length) {
-        if (state.renderer.setIndexStride) {
-          state.renderer.setIndexStride(this.detailSamplingStride());
-        }
         this.activeRenderFileIds.add(fileId);
         activeCount += state.renderer.count;
       }
@@ -951,10 +963,10 @@ class NearLodController {
       renderer = new SplatRenderer(this.gl, this.width, this.height, {
         enableFallbackAvatar: false,
         indexStride: this.detailSamplingStride(),
-        // Root splats still use a larger footprint to cover far-field sampling.
-        // Near LOD has enough density, so keep its Gaussian covariance crisp.
+        // Fill deterministic near-field sample gaps without applying the root
+        // layer's stronger far-field blur.
         sampleOpacityGrowth: 0.3,
-        sampleFootprintGrowth: 0.02,
+        sampleFootprintGrowth: 0.06,
       });
       renderer.load(detailScene, assets, { initiallyVisible: false });
       state.renderer = renderer;

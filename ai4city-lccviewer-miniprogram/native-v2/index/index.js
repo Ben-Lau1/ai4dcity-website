@@ -15,9 +15,9 @@ const JOYSTICK_RADIUS = 54;
 const DOUBLE_TAP_INTERVAL_MS = 300;
 const DOUBLE_TAP_DISTANCE_PX = 20;
 const DIAGNOSTIC_INTERVAL_MS = 1000;
-// Match the mobile H5 renderer: retain full detail at rest and reduce only the
-// framebuffer cost while the view is changing. Gaussian point counts are not
-// reduced by this policy.
+// Match the mobile H5 interaction policy by changing framebuffer resolution
+// under load. Native geometry uses a separate, view-stable source sample because
+// the mini-program renderer cannot sustain the H5 SDK's complete-node budgets.
 const BASE_PIXEL_RATIO = 1.0;
 const INTERACTIVE_PIXEL_RATIO = 0.75;
 const EMERGENCY_PIXEL_RATIO = 0.65;
@@ -33,19 +33,17 @@ const SORT_RESULT_DIRECTION_DOT_THRESHOLD = Math.cos(18 * Math.PI / 180);
 const SORT_RESULT_POSITION_THRESHOLD_SQ = 256;
 const SORT_FOV_Y = 55 * Math.PI / 180;
 const SORT_FAR = 3000;
-const MAX_SAMPLE_STRIDE = 7;
-const LOW_FPS_THRESHOLD = 12;
-const CRITICAL_FPS_THRESHOLD = 8;
 const DEFAULT_QUALITY_LEVEL = 3;
 
-// H5 quality levels translated to Native v2 sampling. Level 3 preserves the
-// currently verified renderer behavior; level 4 spends more fill rate nearby.
+// Keep the geometry set stable while the camera moves. Runtime pressure is
+// handled by framebuffer scale; splat density changes only on an explicit
+// quality selection.
 const QUALITY_OPTIONS = [
-  { id: 0, label: '性能', idleStride: 6, movingStride: 7 },
-  { id: 1, label: '流畅', idleStride: 5, movingStride: 7 },
-  { id: 2, label: '平衡', idleStride: 4, movingStride: 6 },
-  { id: 3, label: '清晰', idleStride: 3, movingStride: 5 },
-  { id: 4, label: '质量', idleStride: 2, movingStride: 4 },
+  { id: 0, label: '性能', stride: 12 },
+  { id: 1, label: '流畅', stride: 11 },
+  { id: 2, label: '平衡', stride: 10 },
+  { id: 3, label: '清晰', stride: 9 },
+  { id: 4, label: '质量', stride: 7 },
 ];
 
 const ENVIRONMENT_OPTIONS = [
@@ -549,7 +547,9 @@ Page({
       }
 
       this.setData({ progress: 86, statusText: '正在创建 GPU 资源' });
-      pendingRenderer = new SplatRenderer(this.gl, this.renderWidth, this.renderHeight);
+      pendingRenderer = new SplatRenderer(this.gl, this.renderWidth, this.renderHeight, {
+        indexStride: qualityProfile(this.data.qualityLevel).stride,
+      });
       pendingRenderer.load(scene, assets);
       pendingRenderer.prepareFastPath();
 
@@ -600,7 +600,7 @@ Page({
           scene,
           baseRenderer: this.splatRenderer,
           sortController: this.sortController,
-          samplingStride: qualityProfile(this.data.qualityLevel).idleStride,
+          samplingStride: qualityProfile(this.data.qualityLevel).stride,
           onActiveCount: (count, refinedNodes) => {
             if (generation !== this.loadGeneration || this.disposed) return;
             this.setDataIfChanged({
@@ -787,7 +787,10 @@ Page({
       aspect: Math.max(1, this.renderWidth) / Math.max(1, this.renderHeight),
       fovY: SORT_FOV_Y,
       far: SORT_FAR,
-      cullToFrustum: reason !== 'initial',
+      // Keep the sampled source set complete across camera directions. The
+      // vertex shader performs visibility rejection without baking the current
+      // view into the persistent index texture.
+      cullToFrustum: false,
       reason,
     };
     const includeDetails = options.includeDetails !== false;
@@ -957,13 +960,8 @@ Page({
 
   updateSamplingPolicy() {
     if (!this.nearLodController) return;
-    const moving = this.isCameraMoving();
-    const fps = Number(this.data.fps) || 0;
     const profile = qualityProfile(this.data.qualityLevel);
-    let stride = moving ? profile.movingStride : profile.idleStride;
-    if (fps > 0 && fps < CRITICAL_FPS_THRESHOLD) stride += moving ? 2 : 1;
-    else if (fps > 0 && fps < LOW_FPS_THRESHOLD) stride += 1;
-    this.nearLodController.setSamplingStride(Math.min(stride, MAX_SAMPLE_STRIDE));
+    this.nearLodController.setSamplingStride(profile.stride);
   },
 
   beginGpuTimer() {
