@@ -26,6 +26,7 @@ function snapshot(camera) {
     aspect: Number(camera.aspect) || 1,
     fovY: Number(camera.fovY) || 55 * Math.PI / 180,
     far: Number(camera.far) || 3000,
+    sampleStride: Math.max(1, Math.floor(Number(camera.sampleStride) || 1)),
     cullToFrustum: camera.cullToFrustum !== false,
     reason: camera.reason || 'settled',
   };
@@ -125,6 +126,7 @@ function createSortController(scene, means, callbacks = {}) {
         aspect: request.camera.aspect,
         fovY: request.camera.fovY,
         far: request.camera.far,
+        sampleStride: request.camera.sampleStride,
         // Sort the current and predicted view together. Padding covers large
         // splats at the edge without paying for the full front hemisphere.
         cullToFrustum: request.camera.cullToFrustum,
@@ -216,12 +218,12 @@ function createSortController(scene, means, callbacks = {}) {
         pump();
         return;
       }
-      // Let the worker start the next dataset before the main thread performs
-      // filtering and texture uploads for this result.
-      pump();
       if (!completedRequest.cancelled && dataset.callbacks.onSorted) {
         dataset.callbacks.onSorted(new Uint32Array(message.indexesBuffer), stats, completedRequest);
       }
+      // Give the renderer one event-loop turn to stage this result before the
+      // worker starts consuming CPU for the next LOD dataset.
+      setTimeout(pump, 0);
     });
     nextWorker.onError((error) => {
       if (disposed || worker !== nextWorker) return;

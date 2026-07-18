@@ -21,7 +21,7 @@ const DIAGNOSTIC_INTERVAL_MS = 1000;
 const BASE_PIXEL_RATIO = 1.0;
 const INTERACTIVE_PIXEL_RATIO = 0.75;
 const EMERGENCY_PIXEL_RATIO = 0.65;
-const INTERACTION_RENDER_WINDOW_MS = 650;
+const INTERACTION_RENDER_WINDOW_MS = 1500;
 const RENDER_SCALE_MIN_HOLD_MS = 400;
 const POOR_FRAME_TIME_MS = 34;
 const VERY_POOR_FRAME_TIME_MS = 48;
@@ -465,6 +465,13 @@ Page({
 
     if (Math.abs(currentRatio - targetRatio) < 0.01) return;
     if (now - this.lastRenderScaleChangeAt < RENDER_SCALE_MIN_HOLD_MS) return;
+    if (targetRatio > currentRatio) {
+      const sortBusy = !!(this.sortController && this.sortController.getStats().busy);
+      const rootUploadBusy = !!(this.splatRenderer && this.splatRenderer.pendingIndexUpload);
+      const lodWorkBusy = !!(this.nearLodController
+        && this.nearLodController.hasPendingIndexWork());
+      if (sortBusy || rootUploadBusy || lodWorkBusy) return;
+    }
     this.setRenderPixelRatio(targetRatio, now, false);
   },
 
@@ -787,6 +794,7 @@ Page({
       aspect: Math.max(1, this.renderWidth) / Math.max(1, this.renderHeight),
       fovY: SORT_FOV_Y,
       far: SORT_FAR,
+      sampleStride: qualityProfile(this.data.qualityLevel).stride,
       // Keep the sampled source set complete across camera directions. The
       // vertex shader performs visibility rejection without baking the current
       // view into the persistent index texture.
@@ -794,12 +802,13 @@ Page({
       reason,
     };
     const includeDetails = options.includeDetails !== false;
-    const rootNeedsSort = !this.firstSortComplete
+    const rootNeedsSort = options.force === true
+      || !this.firstSortComplete
       || cameraNeedsSort(camera, this.lastSortedCamera);
     if (!rootNeedsSort) {
       if (includeDetails && this.detailSortDirty && this.nearLodController) {
         this.nearLodController.requestSort(camera, {
-          activeOnly: reason === 'moving',
+          activeOnly: reason !== 'initial',
         });
         this.detailSortDirty = false;
         return true;
@@ -816,7 +825,7 @@ Page({
     this.sortController.request(camera);
     if (includeDetails && this.nearLodController) {
       this.nearLodController.requestSort(camera, {
-        activeOnly: reason === 'moving',
+        activeOnly: reason !== 'initial',
       });
       this.detailSortDirty = false;
     }
@@ -875,7 +884,7 @@ Page({
         });
         this.nearLodController.update(this.cameraController.getCamera());
       } else {
-        this.splatRenderer.updateIndexes(indexes);
+        this.splatRenderer.updateIndexes(indexes, { preSampled: true });
       }
     } catch (error) {
       this.handleRuntimeFailure(`排序纹理更新失败：${errorMessage(error)}`);
@@ -1289,6 +1298,7 @@ Page({
       statusText: `高斯细粒度：${profile.label}`,
     }, () => {
       this.updateSamplingPolicy();
+      this.requestCameraSort('quality', { force: true });
       this.updateDiagnostics(Date.now(), true);
     });
   },

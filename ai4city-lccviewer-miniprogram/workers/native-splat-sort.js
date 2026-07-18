@@ -109,7 +109,9 @@ function sort(data) {
   const dataset = datasets[datasetId];
   if (!dataset) return;
   const { centers, count } = dataset;
-  ensureScratch(count);
+  const sampleStride = Math.max(1, Math.floor(Number(data.sampleStride) || 1));
+  const sampledCapacity = Math.ceil(count / sampleStride);
+  ensureScratch(sampledCapacity);
   const depths = scratchDepths;
   const keys = scratchKeys;
   const visible = scratchVisible;
@@ -127,7 +129,9 @@ function sort(data) {
   let minDepth = Infinity;
   let maxDepth = -Infinity;
   let visibleCount = 0;
-  for (let index = 0; index < count; index += 1) {
+  // Preserve the same source-index sample set for every camera direction while
+  // avoiding depth work for points that the renderer will not draw.
+  for (let index = 0; index < count; index += sampleStride) {
     const offset = index * 3;
     const relativeX = centers[offset] - position[0];
     const relativeY = centers[offset + 1] - position[1];

@@ -231,6 +231,8 @@ class NearLodController {
     return {
       ...camera,
       predictedForward: camera.forward.slice(),
+      reason: camera.reason || (this.residentReady ? 'settled' : 'initial'),
+      sampleStride: this.detailSamplingStride(),
       cullToFrustum: false,
     };
   }
@@ -459,11 +461,6 @@ class NearLodController {
     const visibilityChanged = nextVisibleIds.join('|') !== this.visibleIds.join('|');
     const selectionChanged = nextIds.join('|') !== this.selectedIds.join('|')
       || nextFineIds.join('|') !== this.selectedFineIds.join('|');
-    const baseFallbackChanged = !!(selectionChanged
-      && this.residentReady
-      && this.residentBaseIndexes
-      && !this.useResidentBaseFallback);
-    if (baseFallbackChanged) this.useResidentBaseFallback = true;
     this.visibleIds = nextVisibleIds;
     this.selectedIds = nextIds;
     this.selectedFineIds = nextFineIds;
@@ -491,16 +488,6 @@ class NearLodController {
       ...currentFineFileIds,
       ...prefetchedFileIds,
     ]);
-    let detailFallbackChanged = false;
-    if (selectionChanged) {
-      this.selectedFileIds.forEach((fileId) => {
-        const state = this.states[fileId];
-        if (state && state.residentIndexes && !state.useResidentFallback) {
-          state.useResidentFallback = true;
-          detailFallbackChanged = true;
-        }
-      });
-    }
     if (!this.startupSelectionCaptured) {
       this.startupSelectionCaptured = true;
       this.startupPrimaryFileIds = new Set(this.primaryFileIds);
@@ -527,9 +514,7 @@ class NearLodController {
     this.evictInactiveStates();
     this.trimFastPaths();
     if (selectionChanged
-      || visibilityChanged
-      || baseFallbackChanged
-      || detailFallbackChanged) this.applySelection();
+      || visibilityChanged) this.applySelection();
     this.notifyResidentProgress();
   }
 
@@ -620,6 +605,7 @@ class NearLodController {
             const releaseScratch = () => this.returnBaseFilterScratch(scratch);
             this.baseRenderer.updateIndexes(indexes, {
               immediate: false,
+              preSampled: true,
               onCommitted: releaseScratch,
               onDiscarded: releaseScratch,
             });
@@ -638,6 +624,7 @@ class NearLodController {
         this.baseRenderer.updateIndexes(result.indexes, {
           // A real LOD hand-off stays atomic so root and detail never leave a hole.
           immediate: this.residentReady && baseRangesChanged,
+          preSampled: true,
           onCommitted: releaseScratch,
           onDiscarded: releaseScratch,
         });
@@ -681,6 +668,7 @@ class NearLodController {
           if (state.renderer.count || state.appliedRangesSignature) {
             state.renderer.updateIndexes(EMPTY_INDEXES, {
               immediate: this.residentReady && rangesChanged,
+              preSampled: true,
             });
           }
         } else {
@@ -712,6 +700,7 @@ class NearLodController {
                 );
                 state.renderer.updateIndexes(indexes, {
                   immediate: false,
+                  preSampled: true,
                   onCommitted: releaseScratch,
                   onDiscarded: releaseScratch,
                 });
@@ -733,6 +722,7 @@ class NearLodController {
             );
             state.renderer.updateIndexes(result.indexes, {
               immediate: this.residentReady && rangesChanged,
+              preSampled: true,
               onCommitted: releaseScratch,
               onDiscarded: releaseScratch,
             });
@@ -864,7 +854,7 @@ class NearLodController {
           if (this.disposed || this.states[fileId] !== state) return;
           const residentResult = !!(request
             && request.camera
-            && request.camera.cullToFrustum === false);
+            && request.camera.reason === 'initial');
           if (!residentResult
             && request
             && request.camera
@@ -1113,6 +1103,15 @@ class NearLodController {
       remaining -= used;
     });
     return maxRows - remaining;
+  }
+
+  hasPendingIndexWork() {
+    if (this.pendingIndexFilterIds.length) return true;
+    for (const fileId in this.states) {
+      const state = this.states[fileId];
+      if (state && state.renderer && state.renderer.pendingIndexUpload) return true;
+    }
+    return false;
   }
 
   getDiagnostics() {

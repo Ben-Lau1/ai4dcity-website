@@ -1298,7 +1298,7 @@ class SplatRenderer {
       return;
     }
     let sampledIndexes = indexes;
-    if (this.indexStride > 1) {
+    if (options.preSampled !== true && this.indexStride > 1) {
       let sampledCount = 0;
       for (let item = 0; item < indexes.length; item += 1) {
         if (indexes[item] % this.indexStride === 0) sampledCount += 1;
