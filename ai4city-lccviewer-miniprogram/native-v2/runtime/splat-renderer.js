@@ -941,6 +941,7 @@ class SplatRenderer {
   }
 
   releaseScene() {
+    this.discardPendingIndexUpload();
     this.releaseFastPath();
     this.dataTextures.forEach((texture) => this.gl.deleteTexture(texture));
     this.dataTextures = [];
@@ -949,7 +950,6 @@ class SplatRenderer {
     this.indexRows = 0;
     this.indexTextureAllocated = [false, false];
     this.hasIndexData = false;
-    this.pendingIndexUpload = null;
     this.count = 0;
     this.indexCount = 0;
     this.sourceCount = 0;
@@ -994,6 +994,11 @@ class SplatRenderer {
     this.scaleCodebook = new Float32Array(scene.sog.meta.scales.codebook);
     this.colorCodebook = new Float32Array(scene.sog.meta.sh0.codebook);
     this.indexRows = Math.ceil(this.sourceCount / this.indexWidth);
+    if (this.indexRows && this.indexCount) {
+      // Allocate both sides of the index double buffer while the loading mask is
+      // visible. Later camera sorts only upload data and atomically swap textures.
+      this.prepareIndexDoubleBuffer();
+    }
     if (this.indexCount) {
       const initial = new Uint32Array(this.sourceCount);
       for (let index = 0; index < this.sourceCount; index += 1) initial[index] = index;
@@ -1267,11 +1272,30 @@ class SplatRenderer {
     return texture;
   }
 
+  prepareIndexDoubleBuffer() {
+    if (!this.sourceCount || !this.indexRows) return false;
+    this.ensureIndexTexture(this.activeIndexTexture);
+    this.ensureIndexTexture(1 - this.activeIndexTexture);
+    this.indexTexture = this.indexTextures[this.activeIndexTexture];
+    return true;
+  }
+
+  discardPendingIndexUpload() {
+    const upload = this.pendingIndexUpload;
+    if (!upload) return;
+    this.pendingIndexUpload = null;
+    if (upload.onDiscarded) upload.onDiscarded();
+  }
+
   updateIndexes(indexes, options = {}) {
-    if (!this.sourceCount || !indexes || indexes.length > this.sourceCount) return;
+    if (!this.sourceCount || !indexes || indexes.length > this.sourceCount) {
+      if (options.onDiscarded) options.onDiscarded();
+      return;
+    }
+    this.discardPendingIndexUpload();
     if (!indexes.length) {
-      this.pendingIndexUpload = null;
       this.setActiveIndexCount(0);
+      if (options.onCommitted) options.onCommitted();
       return;
     }
     const uploadIndex = this.hasIndexData
@@ -1283,6 +1307,8 @@ class SplatRenderer {
       totalRows: Math.ceil(indexes.length / this.indexWidth),
       uploadedRows: 0,
       uploadIndex,
+      onCommitted: options.onCommitted || null,
+      onDiscarded: options.onDiscarded || null,
     };
     this.ensureIndexTexture(uploadIndex);
     if (!this.hasIndexData || options.immediate === true) {
@@ -1334,6 +1360,15 @@ class SplatRenderer {
       );
     }
 
+    const contextLost = !!(gl.isContextLost && gl.isContextLost());
+    const uploadError = gl.getError ? gl.getError() : gl.NO_ERROR;
+    if (contextLost || uploadError !== gl.NO_ERROR) {
+      this.pendingIndexUpload = null;
+      this.indexTextureAllocated[upload.uploadIndex] = false;
+      if (upload.onDiscarded) upload.onDiscarded();
+      return 0;
+    }
+
     upload.uploadedRows = endRow;
     if (upload.uploadedRows >= upload.totalRows) {
       this.activeIndexTexture = upload.uploadIndex;
@@ -1341,6 +1376,7 @@ class SplatRenderer {
       this.hasIndexData = true;
       this.pendingIndexUpload = null;
       this.setActiveIndexCount(upload.count);
+      if (upload.onCommitted) upload.onCommitted();
     }
     return endRow - startRow;
   }

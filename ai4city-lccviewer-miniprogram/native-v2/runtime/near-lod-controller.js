@@ -19,9 +19,10 @@ const MAX_WARM_FAST_PATHS = 3;
 const MAX_CONCURRENT_DETAIL_LOADS = 2;
 const RETRY_DELAY_MS = 2000;
 const MAX_RESIDENT_LOAD_RETRIES = 3;
-const SELECTION_UPDATE_INTERVAL_MS = 180;
-const SELECTION_POSITION_THRESHOLD_SQ = 1;
-const SELECTION_DIRECTION_DOT_THRESHOLD = Math.cos(8 * Math.PI / 180);
+const SELECTION_UPDATE_INTERVAL_MS = 250;
+const SELECTION_POSITION_THRESHOLD_SQ = 4;
+const SORT_RESULT_POSITION_THRESHOLD_SQ = 256;
+const SORT_RESULT_DIRECTION_DOT_THRESHOLD = Math.cos(18 * Math.PI / 180);
 const FULL_RESIDENT_MODE = true;
 const EMPTY_INDEXES = new Uint32Array(0);
 
@@ -53,37 +54,19 @@ function rangesSignature(ranges) {
     .join('|');
 }
 
-function makeRangeMatcher(ranges) {
-  const merged = (ranges || [])
-    .filter((range) => range && range.count > 0)
-    .map((range) => ({ start: range.start, end: range.start + range.count }))
-    .sort((left, right) => left.start - right.start)
-    .reduce((items, range) => {
-      const previous = items[items.length - 1];
-      if (previous && range.start <= previous.end) {
-        previous.end = Math.max(previous.end, range.end);
-      } else {
-        items.push(range);
-      }
-      return items;
-    }, []);
-
-  if (!merged.length) return () => false;
-  return (index) => {
-    let low = 0;
-    let high = merged.length - 1;
-    while (low <= high) {
-      const middle = (low + high) >> 1;
-      const range = merged[middle];
-      if (index < range.start) high = middle - 1;
-      else if (index >= range.end) low = middle + 1;
-      else return true;
-    }
-    return false;
-  };
+function makeRangeMask(ranges, sourceCount) {
+  const count = Math.max(0, Math.floor(Number(sourceCount) || 0));
+  const mask = new Uint8Array(count);
+  (ranges || []).forEach((range) => {
+    if (!range || range.count <= 0) return;
+    const start = Math.max(0, Math.min(count, Math.floor(Number(range.start) || 0)));
+    const end = Math.max(start, Math.min(count, start + Math.floor(Number(range.count) || 0)));
+    if (end > start) mask.fill(1, start, end);
+  });
+  return mask;
 }
 
-function filterIndexes(indexes, matches, scratch) {
+function filterIndexesByMask(indexes, mask, keepMarked, scratch) {
   if (!indexes || !indexes.length) {
     return { indexes: new Uint32Array(0), scratch };
   }
@@ -93,12 +76,25 @@ function filterIndexes(indexes, matches, scratch) {
   let count = 0;
   for (let item = 0; item < indexes.length; item += 1) {
     const index = indexes[item];
-    if (matches(index)) {
+    const marked = index < mask.length && mask[index] !== 0;
+    if (marked === keepMarked) {
       output[count] = index;
       count += 1;
     }
   }
   return { indexes: output.subarray(0, count), scratch: output };
+}
+
+function cameraWithinSortCoverage(current, sorted) {
+  if (!current || !sorted) return false;
+  const dx = current.position[0] - sorted.position[0];
+  const dy = current.position[1] - sorted.position[1];
+  const dz = current.position[2] - sorted.position[2];
+  if (dx * dx + dy * dy + dz * dz > SORT_RESULT_POSITION_THRESHOLD_SQ) return false;
+  const directionDot = current.forward[0] * sorted.forward[0]
+    + current.forward[1] * sorted.forward[1]
+    + current.forward[2] * sorted.forward[2];
+  return directionDot >= SORT_RESULT_DIRECTION_DOT_THRESHOLD;
 }
 
 class NearLodController {
@@ -147,7 +143,11 @@ class NearLodController {
     this.useResidentBaseFallback = false;
     this.baseAppliedKey = '';
     this.baseAppliedRangesSignature = '';
+    this.baseRangeMask = null;
+    this.baseRangeMaskSignature = '';
     this.baseFilterScratch = null;
+    this.pendingIndexFilters = Object.create(null);
+    this.pendingIndexFilterIds = [];
     this.currentCamera = null;
     this.lastSelectionCamera = null;
     this.lastSelectionUpdateAt = 0;
@@ -224,19 +224,20 @@ class NearLodController {
     return this.isFileSelected(normalized);
   }
 
-  sortCameraForFile(fileId) {
-    if (!this.currentCamera) return null;
+  sortCameraForFile(fileId, requestedCamera) {
+    const camera = requestedCamera || this.currentCamera;
+    if (!camera) return null;
     if (FULL_RESIDENT_MODE
       && !this.residentModeDegraded
       && !this.residentReady
       && this.residentFileIds.has(String(fileId))) {
       return {
-        ...this.currentCamera,
-        predictedForward: this.currentCamera.forward.slice(),
+        ...camera,
+        predictedForward: camera.forward.slice(),
         cullToFrustum: false,
       };
     }
-    return this.currentCamera;
+    return camera;
   }
 
   shouldPrepareFastPath(fileId) {
@@ -245,6 +246,9 @@ class NearLodController {
 
   prepareFastPathForState(fileId, state) {
     if (!state || !state.renderer || !this.shouldPrepareFastPath(fileId)) return false;
+    if (state.renderer.prepareIndexDoubleBuffer) {
+      state.renderer.prepareIndexDoubleBuffer();
+    }
     return state.renderer.prepareFastPath();
   }
 
@@ -417,30 +421,21 @@ class NearLodController {
       far: Number(camera.far) || DETAIL_FAR,
     };
     const now = Date.now();
-    let viewChanged = force || !this.lastSelectionCamera;
+    let positionChanged = force || !this.lastSelectionCamera;
     if (!force && this.lastSelectionCamera) {
       const dx = this.currentCamera.position[0] - this.lastSelectionCamera.position[0];
       const dy = this.currentCamera.position[1] - this.lastSelectionCamera.position[1];
       const dz = this.currentCamera.position[2] - this.lastSelectionCamera.position[2];
       const movedSq = dx * dx + dy * dy + dz * dz;
-      const directionDot = this.currentCamera.forward[0] * this.lastSelectionCamera.forward[0]
-        + this.currentCamera.forward[1] * this.lastSelectionCamera.forward[1]
-        + this.currentCamera.forward[2] * this.lastSelectionCamera.forward[2];
-      viewChanged = movedSq >= SELECTION_POSITION_THRESHOLD_SQ
-        || directionDot < SELECTION_DIRECTION_DOT_THRESHOLD;
+      positionChanged = movedSq >= SELECTION_POSITION_THRESHOLD_SQ;
       if (now - this.lastSelectionUpdateAt < SELECTION_UPDATE_INTERVAL_MS
-        || !viewChanged) return;
+        || !positionChanged) return;
     }
     this.lastSelectionCamera = {
       position: this.currentCamera.position.slice(),
       forward: this.currentCamera.forward.slice(),
     };
     this.lastSelectionUpdateAt = now;
-    const baseFallbackChanged = !!(viewChanged
-      && this.residentReady
-      && this.residentBaseIndexes
-      && !this.useResidentBaseFallback);
-    if (baseFallbackChanged) this.useResidentBaseFallback = true;
     const visible = this.visibleNodes(camera);
     const selected = this.selectNodes(camera, visible);
     const selectedFine = this.selectFineRanges(camera, selected);
@@ -451,6 +446,11 @@ class NearLodController {
     const visibilityChanged = nextVisibleIds.join('|') !== this.visibleIds.join('|');
     const selectionChanged = nextIds.join('|') !== this.selectedIds.join('|')
       || nextFineIds.join('|') !== this.selectedFineIds.join('|');
+    const baseFallbackChanged = !!(selectionChanged
+      && this.residentReady
+      && this.residentBaseIndexes
+      && !this.useResidentBaseFallback);
+    if (baseFallbackChanged) this.useResidentBaseFallback = true;
     this.visibleIds = nextVisibleIds;
     this.selectedIds = nextIds;
     this.selectedFineIds = nextFineIds;
@@ -479,7 +479,7 @@ class NearLodController {
       ...prefetchedFileIds,
     ]);
     let detailFallbackChanged = false;
-    if (selectionChanged || viewChanged) {
+    if (selectionChanged) {
       this.selectedFileIds.forEach((fileId) => {
         const state = this.states[fileId];
         if (state && state.residentIndexes && !state.useResidentFallback) {
@@ -520,17 +520,25 @@ class NearLodController {
     this.notifyResidentProgress();
   }
 
-  requestSort(camera) {
-    this.update(camera, true);
+  requestSort(camera, options = {}) {
+    // Moving sorts only refresh depth order for the current LOD set. A pure
+    // camera rotation must not rebuild the LOD selection or flash fallbacks.
+    this.update(camera, options.activeOnly !== true);
     const preloadAll = FULL_RESIDENT_MODE
       && !this.residentModeDegraded
       && !this.residentReady;
-    const targetFileIds = preloadAll ? this.residentFileIds : this.selectedFileIds;
+    const activeOnlyIds = new Set([
+      ...this.activeRenderFileIds,
+      ...this.primaryFileIds,
+    ]);
+    const targetFileIds = preloadAll
+      ? this.residentFileIds
+      : (options.activeOnly ? activeOnlyIds : this.selectedFileIds);
     targetFileIds.forEach((fileId) => {
       const state = this.states[fileId];
       if (!state || !state.renderer || state.failed || state.sortFailed) return;
       this.ensureSortDataset(fileId);
-      const sortCamera = this.sortCameraForFile(fileId) || camera;
+      const sortCamera = this.sortCameraForFile(fileId, camera) || camera;
       if (state.sortHandle) state.sortHandle.request(sortCamera);
     });
   }
@@ -566,7 +574,14 @@ class NearLodController {
       [],
     );
     const baseRangesSignature = rangesSignature(activeBaseRanges);
-    const baseReplacedMatcher = makeRangeMatcher(activeBaseRanges);
+    const baseRangesChanged = baseRangesSignature !== this.baseAppliedRangesSignature;
+    if (!this.baseRangeMask || baseRangesSignature !== this.baseRangeMaskSignature) {
+      this.baseRangeMask = makeRangeMask(
+        activeBaseRanges,
+        this.baseRenderer ? this.baseRenderer.sourceCount : 0,
+      );
+      this.baseRangeMaskSignature = baseRangesSignature;
+    }
     const useResidentBase = this.useResidentBaseFallback && this.residentBaseIndexes;
     const sourceBaseIndexes = useResidentBase ? this.residentBaseIndexes : this.baseIndexes;
     const sourceBaseVersion = useResidentBase
@@ -574,15 +589,46 @@ class NearLodController {
       : `sorted:${this.baseIndexesVersion}`;
     const baseKey = `${sourceBaseVersion}/${baseRangesSignature}`;
     if (sourceBaseIndexes && baseKey !== this.baseAppliedKey) {
-      const result = filterIndexes(
-        sourceBaseIndexes,
-        (index) => !baseReplacedMatcher(index),
-        this.baseFilterScratch,
-      );
-      this.baseFilterScratch = result.scratch;
-      this.baseRenderer.updateIndexes(result.indexes, {
-        immediate: this.residentReady,
-      });
+      const filterScratch = this.baseFilterScratch;
+      this.baseFilterScratch = null;
+      const deferFilter = this.residentReady && !baseRangesChanged;
+      if (deferFilter) {
+        this.queueIndexFilter(
+          'base',
+          sourceBaseIndexes,
+          this.baseRangeMask,
+          false,
+          filterScratch,
+          (indexes, scratch) => {
+            if (this.disposed || this.baseAppliedKey !== baseKey) {
+              this.returnBaseFilterScratch(scratch);
+              return;
+            }
+            const releaseScratch = () => this.returnBaseFilterScratch(scratch);
+            this.baseRenderer.updateIndexes(indexes, {
+              immediate: false,
+              onCommitted: releaseScratch,
+              onDiscarded: releaseScratch,
+            });
+          },
+          (scratch) => this.returnBaseFilterScratch(scratch),
+        );
+      } else {
+        this.cancelIndexFilter('base');
+        const result = filterIndexesByMask(
+          sourceBaseIndexes,
+          this.baseRangeMask,
+          false,
+          filterScratch,
+        );
+        const releaseScratch = () => this.returnBaseFilterScratch(result.scratch);
+        this.baseRenderer.updateIndexes(result.indexes, {
+          // A real LOD hand-off stays atomic so root and detail never leave a hole.
+          immediate: this.residentReady && baseRangesChanged,
+          onCommitted: releaseScratch,
+          onDiscarded: releaseScratch,
+        });
+      }
       this.baseAppliedKey = baseKey;
       this.baseAppliedRangesSignature = baseRangesSignature;
     }
@@ -607,6 +653,7 @@ class NearLodController {
       if (!state.renderer || !state.sortedIndexes) return;
       const ranges = rangesByFile[fileId] || [];
       const rangeSignature = rangesSignature(ranges);
+      const rangesChanged = rangeSignature !== state.appliedRangesSignature;
       const useResident = state.useResidentFallback && state.residentIndexes;
       const sourceIndexes = useResident ? state.residentIndexes : state.sortedIndexes;
       const sourceVersion = useResident
@@ -615,21 +662,66 @@ class NearLodController {
       const stateKey = `${sourceVersion}/${rangeSignature}`;
       if (stateKey !== state.appliedKey) {
         if (!ranges.length) {
+          this.cancelIndexFilter(`detail:${fileId}`);
           if (state.renderer.count || state.appliedRangesSignature) {
             state.renderer.updateIndexes(EMPTY_INDEXES, {
-              immediate: this.residentReady,
+              immediate: this.residentReady && rangesChanged,
             });
           }
         } else {
-          const result = filterIndexes(
-            sourceIndexes,
-            makeRangeMatcher(ranges),
-            state.filterScratch,
-          );
-          state.filterScratch = result.scratch;
-          state.renderer.updateIndexes(result.indexes, {
-            immediate: this.residentReady,
-          });
+          if (!state.rangeMask || rangeSignature !== state.rangeMaskSignature) {
+            state.rangeMask = makeRangeMask(ranges, state.renderer.sourceCount);
+            state.rangeMaskSignature = rangeSignature;
+          }
+          const filterScratch = state.filterScratch;
+          state.filterScratch = null;
+          const deferFilter = this.residentReady && !rangesChanged;
+          if (deferFilter) {
+            this.queueIndexFilter(
+              `detail:${fileId}`,
+              sourceIndexes,
+              state.rangeMask,
+              true,
+              filterScratch,
+              (indexes, scratch) => {
+                if (this.disposed
+                  || this.states[fileId] !== state
+                  || state.appliedKey !== stateKey) {
+                  this.returnStateFilterScratch(fileId, state, scratch);
+                  return;
+                }
+                const releaseScratch = () => this.returnStateFilterScratch(
+                  fileId,
+                  state,
+                  scratch,
+                );
+                state.renderer.updateIndexes(indexes, {
+                  immediate: false,
+                  onCommitted: releaseScratch,
+                  onDiscarded: releaseScratch,
+                });
+              },
+              (scratch) => this.returnStateFilterScratch(fileId, state, scratch),
+            );
+          } else {
+            this.cancelIndexFilter(`detail:${fileId}`);
+            const result = filterIndexesByMask(
+              sourceIndexes,
+              state.rangeMask,
+              true,
+              filterScratch,
+            );
+            const releaseScratch = () => this.returnStateFilterScratch(
+              fileId,
+              state,
+              result.scratch,
+            );
+            state.renderer.updateIndexes(result.indexes, {
+              immediate: this.residentReady && rangesChanged,
+              onCommitted: releaseScratch,
+              onDiscarded: releaseScratch,
+            });
+          }
         }
         state.appliedKey = stateKey;
         state.appliedRangesSignature = rangeSignature;
@@ -649,6 +741,7 @@ class NearLodController {
   releaseState(fileId) {
     const state = this.states[fileId];
     if (!state) return;
+    this.cancelIndexFilter(`detail:${fileId}`);
     delete this.states[fileId];
     if (state.sortHandle) state.sortHandle.dispose();
     if (state.renderer) state.renderer.dispose();
@@ -760,6 +853,12 @@ class NearLodController {
           const residentResult = !!(request
             && request.camera
             && request.camera.cullToFrustum === false);
+          if (!residentResult
+            && request
+            && request.camera
+            && !cameraWithinSortCoverage(this.currentCamera, request.camera)) {
+            return;
+          }
           if (residentResult) {
             state.residentIndexes = indexes;
             state.residentVersion += 1;
@@ -835,6 +934,8 @@ class NearLodController {
       useResidentFallback: true,
       appliedKey: '',
       appliedRangesSignature: '',
+      rangeMask: null,
+      rangeMaskSignature: '',
     };
     this.states[fileId] = state;
 
@@ -900,7 +1001,93 @@ class NearLodController {
     });
   }
 
+  cancelIndexFilter(filterId) {
+    const job = this.pendingIndexFilters[filterId];
+    if (!job) return;
+    delete this.pendingIndexFilters[filterId];
+    const index = this.pendingIndexFilterIds.indexOf(filterId);
+    if (index >= 0) this.pendingIndexFilterIds.splice(index, 1);
+    if (job.onDiscarded) job.onDiscarded(job.output);
+  }
+
+  queueIndexFilter(
+    filterId,
+    indexes,
+    mask,
+    keepMarked,
+    scratch,
+    onComplete,
+    onDiscarded,
+  ) {
+    this.cancelIndexFilter(filterId);
+    const output = scratch && scratch.length >= indexes.length
+      ? scratch
+      : new Uint32Array(indexes.length);
+    this.pendingIndexFilters[filterId] = {
+      count: 0,
+      cursor: 0,
+      indexes,
+      keepMarked,
+      mask,
+      onComplete,
+      onDiscarded,
+      output,
+    };
+    this.pendingIndexFilterIds.push(filterId);
+  }
+
+  returnBaseFilterScratch(scratch) {
+    if (!scratch || this.disposed) return;
+    if (!this.baseFilterScratch || this.baseFilterScratch.length < scratch.length) {
+      this.baseFilterScratch = scratch;
+    }
+  }
+
+  returnStateFilterScratch(fileId, state, scratch) {
+    if (!scratch || this.disposed || this.states[fileId] !== state) return;
+    if (!state.filterScratch || state.filterScratch.length < scratch.length) {
+      state.filterScratch = scratch;
+    }
+  }
+
+  flushIndexFilters(maxItems = 98304, maxMilliseconds = 2) {
+    let remaining = Math.max(0, Math.floor(maxItems));
+    const initialBudget = remaining;
+    const startedAt = Date.now();
+    const chunkSize = 8192;
+    while (remaining > 0 && this.pendingIndexFilterIds.length) {
+      const filterId = this.pendingIndexFilterIds.shift();
+      const job = this.pendingIndexFilters[filterId];
+      if (!job) continue;
+      const end = Math.min(
+        job.indexes.length,
+        job.cursor + Math.min(chunkSize, remaining),
+      );
+      for (let item = job.cursor; item < end; item += 1) {
+        const sourceIndex = job.indexes[item];
+        const marked = sourceIndex < job.mask.length && job.mask[sourceIndex] !== 0;
+        if (marked === job.keepMarked) {
+          job.output[job.count] = sourceIndex;
+          job.count += 1;
+        }
+      }
+      remaining -= end - job.cursor;
+      job.cursor = end;
+      if (job.cursor < job.indexes.length) {
+        this.pendingIndexFilterIds.push(filterId);
+      } else {
+        delete this.pendingIndexFilters[filterId];
+        job.onComplete(job.output.subarray(0, job.count), job.output);
+      }
+      if (Date.now() - startedAt >= maxMilliseconds) break;
+    }
+    return initialBudget - remaining;
+  }
+
   flushIndexUploads(maxRows = 32) {
+    // Filtering sorted arrays is also spread across frames; the renderer keeps
+    // drawing the last complete index texture throughout this stage.
+    this.flushIndexFilters();
     let remaining = Math.max(0, Math.floor(maxRows));
     const priorityIds = [
       ...this.activeRenderFileIds,
@@ -924,6 +1111,7 @@ class NearLodController {
       fastFiles: states.filter((state) => state.renderer && state.renderer.hasFastPath()).length,
       loadingFiles: this.activeFileLoads,
       queuedFiles: this.pendingFileIds.length,
+      pendingIndexFilters: this.pendingIndexFilterIds.length,
       sampleStride: this.samplingStride,
       detailSampleStride: this.detailSamplingStride(),
       selectedFiles: this.selectedFileIds.size,
@@ -938,6 +1126,8 @@ class NearLodController {
     this.baseIndexes = null;
     this.residentBaseIndexes = null;
     this.baseFilterScratch = null;
+    this.pendingIndexFilters = Object.create(null);
+    this.pendingIndexFilterIds = [];
   }
 }
 

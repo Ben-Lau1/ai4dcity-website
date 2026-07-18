@@ -10,6 +10,8 @@ const { TrajectoryPlayer } = require('../runtime/trajectory-player');
 const SCENES = require('../scenes/generated');
 
 const SORT_IDLE_MS = 700;
+const MOVING_ROOT_SORT_INTERVAL_MS = 140;
+const MOVING_DETAIL_SORT_INTERVAL_MS = 420;
 const SORT_PREDICTION_HORIZON_MS = 700;
 const JOYSTICK_RADIUS = 54;
 const DOUBLE_TAP_INTERVAL_MS = 300;
@@ -29,6 +31,8 @@ const POOR_FRAME_RECOVERY_MS = 30;
 const VERY_POOR_FRAME_RECOVERY_MS = 42;
 const SORT_DIRECTION_DOT_THRESHOLD = Math.cos(2.5 * Math.PI / 180);
 const SORT_POSITION_THRESHOLD_SQ = 16;
+const SORT_RESULT_DIRECTION_DOT_THRESHOLD = Math.cos(18 * Math.PI / 180);
+const SORT_RESULT_POSITION_THRESHOLD_SQ = 256;
 const SORT_FOV_Y = 55 * Math.PI / 180;
 const SORT_FAR = 3000;
 const MAX_SAMPLE_STRIDE = 7;
@@ -134,6 +138,18 @@ function cameraNeedsSort(current, previous) {
   return directionDot < SORT_DIRECTION_DOT_THRESHOLD;
 }
 
+function cameraWithinSortCoverage(current, sorted) {
+  if (!current || !sorted) return false;
+  const dx = current.position[0] - sorted.position[0];
+  const dy = current.position[1] - sorted.position[1];
+  const dz = current.position[2] - sorted.position[2];
+  if (dx * dx + dy * dy + dz * dz > SORT_RESULT_POSITION_THRESHOLD_SQ) return false;
+  const directionDot = current.forward[0] * sorted.forward[0]
+    + current.forward[1] * sorted.forward[1]
+    + current.forward[2] * sorted.forward[2];
+  return directionDot >= SORT_RESULT_DIRECTION_DOT_THRESHOLD;
+}
+
 function predictForward(current, previousSample, now) {
   const forward = current.forward.slice();
   if (!previousSample) return forward;
@@ -213,6 +229,8 @@ Page({
     this.residentProgress = null;
     this.lastSortedCamera = null;
     this.sortRequestedCamera = null;
+    this.lastMovingRootSortAt = 0;
+    this.lastMovingDetailSortAt = 0;
     this.lastMotionAt = 0;
     this.wasCameraMoving = false;
     this.cameraPredictionSample = null;
@@ -478,6 +496,8 @@ Page({
     this.residentProgress = null;
     this.lastSortedCamera = null;
     this.sortRequestedCamera = null;
+    this.lastMovingRootSortAt = 0;
+    this.lastMovingDetailSortAt = 0;
     this.lastMotionAt = 0;
     this.wasCameraMoving = false;
     this.cameraPredictionSample = null;
@@ -569,7 +589,12 @@ Page({
       }
       this.sortController = createSortController(scene, assets.means, {
         onReady: () => this.handleSortReady(generation),
-        onSorted: (indexes, stats) => this.handleSorted(generation, indexes, stats),
+        onSorted: (indexes, stats, request) => this.handleSorted(
+          generation,
+          indexes,
+          stats,
+          request,
+        ),
         onError: (error) => this.handleSortError(generation, error),
       });
       if (scene.nearLod) {
@@ -759,11 +784,8 @@ Page({
     this.updateDiagnostics(Date.now(), true);
   },
 
-  requestCameraSort(reason) {
+  requestCameraSort(reason, options = {}) {
     if (!this.sortController || !this.cameraController || this.disposed) return false;
-    // The controller queues root work ahead of pending LOD jobs. Do not make the
-    // root wait for all historical detail sorts before it can enter that queue.
-    if (this.sortRequestInFlight) return false;
     const sourceCamera = this.cameraController.getCamera();
     const camera = {
       ...sourceCamera,
@@ -772,14 +794,18 @@ Page({
       fovY: SORT_FOV_Y,
       far: SORT_FAR,
       cullToFrustum: reason !== 'initial',
+      reason,
     };
-    const includeDetails = reason !== 'moving';
+    const includeDetails = options.includeDetails !== false;
     const rootNeedsSort = !this.firstSortComplete
       || cameraNeedsSort(camera, this.lastSortedCamera);
     if (!rootNeedsSort) {
       if (includeDetails && this.detailSortDirty && this.nearLodController) {
-        this.nearLodController.requestSort(camera);
+        this.nearLodController.requestSort(camera, {
+          activeOnly: reason === 'moving',
+        });
         this.detailSortDirty = false;
+        return true;
       }
       this.sortDirty = false;
       return false;
@@ -789,14 +815,15 @@ Page({
     this.sortRequestRevision = this.cameraRevision;
     this.sortDirty = false;
     this.sortFailed = false;
-    this.sortReason = reason;
     this.sortRequestedCamera = cameraSnapshot(camera);
     this.sortController.request(camera);
     if (includeDetails && this.nearLodController) {
-      this.nearLodController.requestSort(camera);
+      this.nearLodController.requestSort(camera, {
+        activeOnly: reason === 'moving',
+      });
       this.detailSortDirty = false;
     }
-    this.updateDiagnostics(Date.now(), true);
+    if (reason !== 'moving') this.updateDiagnostics(Date.now(), true);
     return true;
   },
 
@@ -819,32 +846,35 @@ Page({
     });
   },
 
-  handleSorted(generation, indexes, stats) {
+  handleSorted(generation, indexes, stats, completedRequest) {
     if (generation !== this.loadGeneration || this.disposed) return;
-    this.sortRequestInFlight = false;
+    this.sortRequestInFlight = !!(this.sortController && this.sortController.getStats().busy);
     const now = Date.now();
     const currentCamera = this.cameraController ? this.cameraController.getCamera() : null;
-    const completedCamera = this.sortRequestedCamera;
-    const stale = !currentCamera || !this.sortRequestedCamera
-      || cameraNeedsSort(currentCamera, this.sortRequestedCamera);
+    const completedCamera = completedRequest && completedRequest.camera
+      ? completedRequest.camera
+      : this.sortRequestedCamera;
+    const completedReason = completedCamera && completedCamera.reason
+      ? completedCamera.reason
+      : 'settled';
+    const stale = !currentCamera || !completedCamera
+      || cameraNeedsSort(currentCamera, completedCamera);
+    const outsideCoverage = !cameraWithinSortCoverage(currentCamera, completedCamera);
 
-    // A completed worker sort can arrive after the user has resumed moving.
-    // Applying that stale million-point result causes a large filter/upload
-    // hitch and immediately becomes obsolete, so leave the resident order in
-    // place and sort once the camera has settled again.
-    if (this.sortReason !== 'initial' && stale) {
+    // Continuous moving sorts may complete behind the latest camera. Keep only
+    // results whose padded visibility cone still covers the current view.
+    if (completedReason !== 'initial' && outsideCoverage) {
       this.sortDirty = true;
       this.detailSortDirty = true;
-      this.sortRequestedCamera = null;
       if (this.isCameraMoving()) this.lastMotionAt = now;
-      this.updateDiagnostics(now, true, stats);
+      this.updateDiagnostics(now, completedReason !== 'moving', stats);
       return;
     }
 
     try {
       if (this.nearLodController) {
         this.nearLodController.setBaseIndexes(indexes, {
-          resident: this.sortReason === 'initial',
+          resident: completedReason === 'initial',
         });
         this.nearLodController.update(this.cameraController.getCamera());
       } else {
@@ -858,7 +888,6 @@ Page({
     this.sortDirty = stale;
     this.sortFailed = false;
     this.lastSortedCamera = completedCamera;
-    this.sortRequestedCamera = null;
     if (stale && this.isCameraMoving()) this.lastMotionAt = now;
     const firstResult = !this.firstSortComplete;
     this.firstSortComplete = true;
@@ -869,7 +898,7 @@ Page({
     if (this.data.errorDetail.indexOf('排序失败') === 0) patch.errorDetail = '';
     if (Object.keys(patch).length) this.setData(patch);
     this.finishInitialLoad();
-    this.updateDiagnostics(now, true, stats);
+    this.updateDiagnostics(now, completedReason !== 'moving', stats);
   },
 
   handleSortError(generation, error) {
@@ -919,6 +948,15 @@ Page({
       }
       this.lastMotionAt = now;
       this.sortDirty = true;
+      this.detailSortDirty = true;
+      if (this.firstSortComplete
+        && now - this.lastMovingRootSortAt >= MOVING_ROOT_SORT_INTERVAL_MS) {
+        const includeDetails = now - this.lastMovingDetailSortAt
+          >= MOVING_DETAIL_SORT_INTERVAL_MS;
+        this.requestCameraSort('moving', { includeDetails });
+        this.lastMovingRootSortAt = now;
+        if (includeDetails) this.lastMovingDetailSortAt = now;
+      }
     } else if (this.wasCameraMoving) {
       this.lastMotionAt = now;
     }
@@ -926,7 +964,6 @@ Page({
 
     if (!moving
       && (this.sortDirty || this.detailSortDirty)
-      && !this.sortRequestInFlight
       && now - this.lastMotionAt >= SORT_IDLE_MS) {
       this.requestCameraSort('settled');
     }
@@ -1028,7 +1065,7 @@ Page({
       : 100;
     let sortState = '等待首排';
     if (this.sortFailed) sortState = '排序错误';
-    else if (this.sortRequestInFlight || stats.busy) {
+    else if (stats.busy) {
       sortState = this.firstSortComplete ? '排序中' : '首帧排序';
     } else if (this.isCameraMoving()) sortState = '沿用旧序';
     else if (this.sortDirty) sortState = '静止确认';

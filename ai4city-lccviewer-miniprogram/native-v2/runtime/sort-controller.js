@@ -27,6 +27,7 @@ function snapshot(camera) {
     fovY: Number(camera.fovY) || 55 * Math.PI / 180,
     far: Number(camera.far) || 3000,
     cullToFrustum: camera.cullToFrustum !== false,
+    reason: camera.reason || 'settled',
   };
 }
 
