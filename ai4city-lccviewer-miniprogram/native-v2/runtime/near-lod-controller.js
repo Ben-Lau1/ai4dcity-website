@@ -3,9 +3,7 @@
 const { cleanupAssets, loadSogAssets } = require('./range-loader');
 const { SplatRenderer } = require('./splat-renderer');
 
-// The largest shipped near node contains 387,507 splats. Keep it selectable while
-// making the advertised cap real for every node, including the first candidate.
-const DETAIL_POINT_BUDGET = 1400000;
+const DEFAULT_POINT_BUDGET = 1300000;
 const DETAIL_RADIUS = 360;
 const FINE_DETAIL_RADIUS = 220;
 const PREFETCH_DISTANCE = 220;
@@ -41,6 +39,11 @@ function distanceToBoundsSquared(position, bounds) {
 
 function pointCount(node) {
   return node.detail.reduce((sum, range) => sum + range.count, 0);
+}
+
+function basePointCount(node) {
+  const ranges = Array.isArray(node.base) ? node.base : (node.base ? [node.base] : []);
+  return ranges.reduce((sum, range) => sum + range.count, 0);
 }
 
 function rangePointCount(ranges) {
@@ -106,9 +109,14 @@ class NearLodController {
     this.scene = options.scene;
     this.baseRenderer = options.baseRenderer;
     this.sortController = options.sortController;
-    this.samplingStride = Math.max(
-      1,
-      Math.min(8, Math.floor(Number(options.samplingStride) || 1)),
+    this.samplingStride = 1;
+    this.rootPointCount = Math.max(
+      0,
+      Math.floor(Number(this.scene.sog && this.scene.sog.meta.count) || 0),
+    );
+    this.pointBudget = Math.max(
+      this.rootPointCount,
+      Math.floor(Number(options.pointBudget) || DEFAULT_POINT_BUDGET),
     );
     this.onActiveCount = options.onActiveCount || null;
     this.onStatus = options.onStatus || null;
@@ -166,26 +174,23 @@ class NearLodController {
   }
 
   detailSamplingStride() {
-    // Keep the far-field root cheap while preserving dense nearby Gaussian data.
-    return Math.max(1, this.samplingStride - 3);
+    return 1;
   }
 
-  setSamplingStride(stride) {
-    const normalized = Math.max(1, Math.min(8, Math.floor(Number(stride) || 1)));
-    if (normalized === this.samplingStride) return false;
-    this.samplingStride = normalized;
+  setSamplingStride() {
+    if (this.samplingStride === 1) return false;
+    this.samplingStride = 1;
     if (this.baseRenderer && this.baseRenderer.setIndexStride) {
-      this.baseRenderer.setIndexStride(normalized);
+      this.baseRenderer.setIndexStride(1);
     }
     const activeIds = new Set([
       ...this.activeRenderFileIds,
       ...this.selectedFileIds,
     ]);
-    const detailStride = this.detailSamplingStride();
     activeIds.forEach((fileId) => {
       const state = this.states[fileId];
       if (state && state.renderer && state.renderer.setIndexStride) {
-        state.renderer.setIndexStride(detailStride);
+        state.renderer.setIndexStride(1);
       }
     });
     if (this.onActiveCount) {
@@ -196,6 +201,17 @@ class NearLodController {
       });
       this.onActiveCount(activeCount, this.activeRefinedCount);
     }
+    return true;
+  }
+
+  setPointBudget(pointBudget) {
+    const normalized = Math.max(
+      this.rootPointCount,
+      Math.floor(Number(pointBudget) || DEFAULT_POINT_BUDGET),
+    );
+    if (normalized === this.pointBudget) return false;
+    this.pointBudget = normalized;
+    if (this.currentCamera) this.update(this.currentCamera, true);
     return true;
   }
 
@@ -227,17 +243,13 @@ class NearLodController {
   sortCameraForFile(fileId, requestedCamera) {
     const camera = requestedCamera || this.currentCamera;
     if (!camera) return null;
-    if (FULL_RESIDENT_MODE
-      && !this.residentModeDegraded
-      && !this.residentReady
-      && this.residentFileIds.has(String(fileId))) {
-      return {
-        ...camera,
-        predictedForward: camera.forward.slice(),
-        cullToFrustum: false,
-      };
-    }
-    return camera;
+    // Keep every selected node complete. Culling during sort permanently bakes
+    // the current view into the index list and exposes holes after a rotation.
+    return {
+      ...camera,
+      predictedForward: camera.forward.slice(),
+      cullToFrustum: false,
+    };
   }
 
   shouldPrepareFastPath(fileId) {
@@ -346,24 +358,37 @@ class NearLodController {
   }
 
   selectNodes(camera, visibleNodes) {
+    const previous = new Set(this.selectedIds);
+    const exitRadiusSq = DETAIL_RADIUS * DETAIL_RADIUS * 1.21;
     const candidates = (visibleNodes || []).map((node) => ({
       node,
       distanceSq: distanceToBoundsSquared(camera.position, node.bounds),
-    })).filter((candidate) => candidate.distanceSq <= DETAIL_RADIUS * DETAIL_RADIUS)
-      .sort((left, right) => left.distanceSq - right.distanceSq);
+    })).filter((candidate) => candidate.distanceSq <= (
+      previous.has(candidate.node.id)
+        ? exitRadiusSq
+        : DETAIL_RADIUS * DETAIL_RADIUS
+    )).sort((left, right) => {
+      const leftScore = left.distanceSq * (previous.has(left.node.id) ? 0.8 : 1);
+      const rightScore = right.distanceSq * (previous.has(right.node.id) ? 0.8 : 1);
+      return leftScore - rightScore;
+    });
     const selected = [];
-    let points = 0;
+    let points = this.rootPointCount;
     candidates.forEach((candidate) => {
       const count = pointCount(candidate.node);
-      if (count < 1000 || points + count > DETAIL_POINT_BUDGET) return;
+      const delta = Math.max(0, count - basePointCount(candidate.node));
+      if (count < 50 || points + delta > this.pointBudget) return;
       selected.push(candidate.node);
-      points += count;
+      points += delta;
     });
     return selected;
   }
 
   selectFineRanges(camera, selectedNodes) {
-    let points = (selectedNodes || []).reduce((sum, node) => sum + pointCount(node), 0);
+    let points = this.rootPointCount + (selectedNodes || []).reduce(
+      (sum, node) => sum + Math.max(0, pointCount(node) - basePointCount(node)),
+      0,
+    );
     const candidates = [];
     (selectedNodes || []).forEach((node) => {
       (node.detail || []).forEach((range, rangeIndex) => {
@@ -385,7 +410,7 @@ class NearLodController {
     candidates.sort((left, right) => left.distanceSq - right.distanceSq);
     const selected = [];
     candidates.forEach((candidate) => {
-      if (points + candidate.delta > DETAIL_POINT_BUDGET) return;
+      if (points + candidate.delta > this.pointBudget) return;
       selected.push(candidate);
       points += candidate.delta;
     });
@@ -950,11 +975,6 @@ class NearLodController {
       }
       renderer = new SplatRenderer(this.gl, this.width, this.height, {
         enableFallbackAvatar: false,
-        indexStride: this.detailSamplingStride(),
-        // Root splats still use a larger footprint to cover far-field sampling.
-        // Near LOD has enough density, so keep its Gaussian covariance crisp.
-        sampleOpacityGrowth: 0.3,
-        sampleFootprintGrowth: 0.02,
       });
       renderer.load(detailScene, assets, { initiallyVisible: false });
       state.renderer = renderer;
@@ -1112,6 +1132,7 @@ class NearLodController {
       loadingFiles: this.activeFileLoads,
       queuedFiles: this.pendingFileIds.length,
       pendingIndexFilters: this.pendingIndexFilterIds.length,
+      pointBudget: this.pointBudget,
       sampleStride: this.samplingStride,
       detailSampleStride: this.detailSamplingStride(),
       selectedFiles: this.selectedFileIds.size,
