@@ -10,8 +10,6 @@ const { TrajectoryPlayer } = require('../runtime/trajectory-player');
 const SCENES = require('../scenes/generated');
 
 const SORT_IDLE_MS = 700;
-const MOVING_ROOT_SORT_INTERVAL_MS = 140;
-const MOVING_DETAIL_SORT_INTERVAL_MS = 420;
 const SORT_PREDICTION_HORIZON_MS = 700;
 const JOYSTICK_RADIUS = 54;
 const DOUBLE_TAP_INTERVAL_MS = 300;
@@ -229,8 +227,6 @@ Page({
     this.residentProgress = null;
     this.lastSortedCamera = null;
     this.sortRequestedCamera = null;
-    this.lastMovingRootSortAt = 0;
-    this.lastMovingDetailSortAt = 0;
     this.lastMotionAt = 0;
     this.wasCameraMoving = false;
     this.cameraPredictionSample = null;
@@ -496,8 +492,6 @@ Page({
     this.residentProgress = null;
     this.lastSortedCamera = null;
     this.sortRequestedCamera = null;
-    this.lastMovingRootSortAt = 0;
-    this.lastMovingDetailSortAt = 0;
     this.lastMotionAt = 0;
     this.wasCameraMoving = false;
     this.cameraPredictionSample = null;
@@ -949,14 +943,6 @@ Page({
       this.lastMotionAt = now;
       this.sortDirty = true;
       this.detailSortDirty = true;
-      if (this.firstSortComplete
-        && now - this.lastMovingRootSortAt >= MOVING_ROOT_SORT_INTERVAL_MS) {
-        const includeDetails = now - this.lastMovingDetailSortAt
-          >= MOVING_DETAIL_SORT_INTERVAL_MS;
-        this.requestCameraSort('moving', { includeDetails });
-        this.lastMovingRootSortAt = now;
-        if (includeDetails) this.lastMovingDetailSortAt = now;
-      }
     } else if (this.wasCameraMoving) {
       this.lastMotionAt = now;
     }
