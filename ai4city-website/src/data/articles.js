@@ -2,7 +2,7 @@
 
 export const ARTICLE_CONTENT = {
   "urban-science-conference-2026": {
-    title: "Information Update | The 4th Urban Science Conference",
+    title: "The 4th Urban Science Conference",
     subtitle: "Invitation to the 4th Urban Science Conference",
     date: "July 18, 2026",
     site: "Conference Announcement",
