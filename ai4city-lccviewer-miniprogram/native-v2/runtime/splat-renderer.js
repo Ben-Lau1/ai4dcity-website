@@ -754,7 +754,16 @@ class SplatRenderer {
     this.count = 0;
     this.sourceCount = 0;
     this.indexCount = 0;
-    this.indexStride = 1;
+    this.indexStride = Math.max(
+      1,
+      Math.min(8, Math.floor(Number(options.indexStride) || 1)),
+    );
+    this.sampleOpacityGrowth = Number.isFinite(options.sampleOpacityGrowth)
+      ? Math.max(0, Number(options.sampleOpacityGrowth))
+      : 0.42;
+    this.sampleFootprintGrowth = Number.isFinite(options.sampleFootprintGrowth)
+      ? Math.max(0, Number(options.sampleFootprintGrowth))
+      : 0.07;
     this.indexWidth = 1024;
     this.indexTextures = [gl.createTexture(), gl.createTexture()];
     this.activeIndexTexture = 0;
@@ -1185,11 +1194,11 @@ class SplatRenderer {
   }
 
   sampleCompensation() {
-    return 1;
+    return Math.min(2.5, 1 + (this.indexStride - 1) * this.sampleOpacityGrowth);
   }
 
   sampleFootprintScale() {
-    return 1;
+    return Math.min(1.42, 1 + (this.indexStride - 1) * this.sampleFootprintGrowth);
   }
 
   applySamplingUniforms(program, uniforms) {
@@ -1201,8 +1210,8 @@ class SplatRenderer {
     gl.uniform1f(uniforms.uSampleFootprintScale, this.sampleFootprintScale());
   }
 
-  setIndexStride() {
-    const normalized = 1;
+  setIndexStride(stride) {
+    const normalized = Math.max(1, Math.min(8, Math.floor(Number(stride) || 1)));
     if (normalized === this.indexStride) return false;
     this.indexStride = normalized;
     this.setRendererCount(Math.ceil(this.indexCount / this.indexStride));
