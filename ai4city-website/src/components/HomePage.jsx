@@ -41,8 +41,8 @@ export const HomePage = ({
               AI4CITY LAB
             </h1>
             
-            {ARTICLE_CONTENT['seminar-hao-li'] && (() => {
-              const s = ARTICLE_CONTENT['seminar-hao-li'];
+            {ARTICLE_CONTENT['urban-science-conference-2026'] && (() => {
+              const s = ARTICLE_CONTENT['urban-science-conference-2026'];
               const hasExternal = s.link && s.link.trim();
               const hasInternal = s.body && s.body.length > 0;
               const canClick = hasExternal || hasInternal;
@@ -53,10 +53,10 @@ export const HomePage = ({
                   onClick={() => {
                     if (!canClick) return;
                     if (hasExternal) window.open(s.link, '_blank');
-                    else setPage('article', 'seminar-hao-li');
+                    else setPage('article', 'urban-science-conference-2026');
                   }}
                 >
-                  <h2 className="text-xl md:text-2xl font-bold mb-2 text-white">Upcoming Event</h2>
+                  <h2 className="text-xl md:text-2xl font-bold mb-2 text-white">Latest News</h2>
                   <p className="text-lg md:text-xl font-medium leading-snug">{s.title}</p>
                   <div className="flex items-center gap-4 mt-4 text-sm text-gray-300">
                     <span className="flex items-center gap-2"><Calendar size={16}/> {s.date}</span>

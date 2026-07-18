@@ -1,6 +1,18 @@
 // src/data/articles.js
 
 export const ARTICLE_CONTENT = {
+  "urban-science-conference-2026": {
+    title: "Information Update | The 4th Urban Science Conference",
+    subtitle: "Invitation to the 4th Urban Science Conference",
+    date: "July 18, 2026",
+    site: "Conference Announcement",
+    author: "AI4City Lab",
+    img: "",
+    abstract: "The latest information for the 4th Urban Science Conference is now available. Please visit the official WeChat announcement for the updated conference details.",
+    body: [],
+    link: "https://mp.weixin.qq.com/s/lRDOcSbJ1bb5kuGwgF9UdA",
+    details: []
+  },
   "global-south-geoai-symposium": {
     title: "Successfully Held: GeoAI Symposium for Sustainable Cities in the Global South",
     subtitle: "Data, Intelligence, and Interdisciplinary Perspectives",
