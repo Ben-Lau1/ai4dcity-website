@@ -50,21 +50,20 @@ export const TEAM_DATA = {
     { name: "Shuxian Shi", role: "Remote sensing applications and urban environmental monitoring", email: "Shelly-Shi@outlook.com", homepage: "", img: "/images/people/shishuxian.jpg" },
     { name: "Hongye Hou", role: "3D vision, multi-model learning", email: "houhongye2001@stu.xjtu.edu.cn", homepage: "", img: "/images/people/houhongye.jpg" },
     { name: "Mengrui Yin", role: "3D Computer Vision", email: "mengruiyin6@gmail.com", homepage: "", img: "/images/people/MengruiYin.jpg" },
-    { name: "Xiaoyu Li", role: "UAV remote sensing, environmental monitoring and LULC classification", email: "xiaoyu6936@gmail.com", homepage: "", img: "/images/people/lixiaoyu.png" },
     { name: "Qinghe Liu", role: "Intelligent point cloud processing", email: "liuqinghe@nwafu.edu.cn", homepage: "", img: "/images/people/profile.png" },
-    { name: "Yawen Lai", role: "Explainable AI for urban systems, large-scale urban environmental analysis", email: "2030249245@qq.com", homepage: "", img: "/images/people/YawenLai.jpg" }
+    { name: "Hongyu Ye", role: "Spatial big data applications and 3D city modelling and simulation", email: "jackson513ye@qq.com", homepage: "https://www.redfish.space/", img: "/images/people/yehongyu.jpg" }
   ],
 
   // 6. 访问学生 (Visiting Students)
   vst: [
     { name: "Bingchen Li", role: "Urban Economics & Regional Economics", email: "bingchen054@gmail.com", homepage: "", img: "/images/people/libingchen.png" },
-    
-    { name: "Hongyu Ye", role: "Spatial big data applications and 3D city modelling and simulation", email: "jackson513ye@qq.com", homepage: "https://www.redfish.space/", img: "/images/people/yehongyu.jpg" },
     { name: "Hongyu Yao", role: "Remote sensing image processing and Spatial-temporal data analysis", email: "yoyojusto@163.com", homepage: "", img: "/images/people/HongyuYao.jpg" },
     { name: "Haoran Gong", role: "computer vision, point clouds, and 3D reconstruction", email: "gonghr@stu.xjtu.edu.cn", homepage: "", img: "/images/people/gonghaoran.jpg" },
     { name: "Wanqi Liu", role: "Multimodal urban sensing, GeoAI", email: "w.liu.25@ucl.ac.uk", homepage: "", img: "/images/people/WanqiLiu.jpg" },
     { name: "Xuran Hu", role: "Intelligent interpretation of multimodal remote sensing data", email: "XuRanHu@stu.xidian.edu.cn", homepage: "xuran-hu.github.io", img: "/images/people/huxuran.jpg" },
-    { name: "Tao Liu", role: "Geospatial Foundation Models, Remote Sensing Change Understanding, Multimodal Learning, Earth Surface Forecasting", email: "tao.liu@autuni.ac.nz", homepage: "", img: "/images/people/TaoLiu.jpg" }
+    { name: "Tao Liu", role: "Geospatial Foundation Models, Remote Sensing Change Understanding, Multimodal Learning, Earth Surface Forecasting", email: "tao.liu@autuni.ac.nz", homepage: "", img: "/images/people/TaoLiu.jpg" },
+    { name: "Xiaoyu Li", role: "UAV remote sensing, environmental monitoring and LULC classification", email: "xiaoyu6936@gmail.com", homepage: "", img: "/images/people/lixiaoyu.png" },
+    { name: "Yawen Lai", role: "Explainable AI for urban systems, large-scale urban environmental analysis", email: "2030249245@qq.com", homepage: "", img: "/images/people/YawenLai.jpg" }
   ],
 
   // 7. 访问学者 (Visiting Scholars)
