@@ -112,17 +112,19 @@
     </view>
     <view class="scene-divider"></view>
     <text class="scene-list-title">选择场景</text>
-    <button
-      wx:for="{{scenes}}"
-      wx:key="id"
-      class="scene-item {{activeSceneId === item.id ? 'active' : ''}}"
-      data-scene-id="{{item.id}}"
-      bindtap="switchScene"
-      hover-class="control-hover"
-    >
-      <view class="scene-item-dot"></view>
-      <text>{{item.label}}</text>
-    </button>
+    <scroll-view class="scene-list" scroll-y>
+      <button
+        wx:for="{{scenes}}"
+        wx:key="id"
+        class="scene-item {{activeSceneId === item.id ? 'active' : ''}}"
+        data-scene-id="{{item.id}}"
+        bindtap="switchScene"
+        hover-class="control-hover"
+      >
+        <view class="scene-item-dot"></view>
+        <text>{{item.label}}</text>
+      </button>
+    </scroll-view>
   </view>
 
   <view wx:if="{{loading}}" class="loading-layer">

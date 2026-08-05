@@ -1,10 +1,16 @@
 'use strict';
 
+const { normalizeSampleStride } = require('./sample-stride');
+
 const WORKER_PATH = 'workers/native-splat-sort.js';
 const MAX_RESTARTS = 2;
+const MAX_CONSECUTIVE_ROOT_SORTS = 2;
+const DETAIL_INIT_CHUNK_BYTES = 256 * 1024;
+const DETAIL_INIT_INTERVAL_MS = 16;
+const RESULT_TRANSFER_CHUNK_INDICES = 32768;
+const RESULT_TRANSFER_MAX_CHUNK_INDICES = 65536;
 const ROOT_FRUSTUM_PADDING = 24 * Math.PI / 180;
 const DETAIL_FRUSTUM_PADDING = 16 * Math.PI / 180;
-const MAX_CONSECUTIVE_ROOT_SORTS = 2;
 
 function messagePayload(event) {
   return event && event.message && typeof event.message === 'object'
@@ -12,10 +18,38 @@ function messagePayload(event) {
     : event;
 }
 
-function meansBufferOf(means) {
-  return means.byteOffset === 0 && means.byteLength === means.buffer.byteLength
-    ? means.buffer
-    : means.buffer.slice(means.byteOffset, means.byteOffset + means.byteLength);
+function dataBufferOf(values) {
+  return values.byteOffset === 0 && values.byteLength === values.buffer.byteLength
+    ? values.buffer
+    : values.buffer.slice(values.byteOffset, values.byteOffset + values.byteLength);
+}
+
+function sortPayloadOf(datasetScene, data) {
+  const count = datasetScene.sog.meta.count;
+  if (data
+    && data.format === 'uint16x3-linear'
+    && data.values
+    && Array.isArray(data.mins)
+    && Array.isArray(data.maxs)) {
+    if (data.values.byteLength !== count * 6) {
+      throw new Error(`Linear sort centers length mismatch for ${count} points`);
+    }
+    return {
+      buffer: dataBufferOf(data.values),
+      format: data.format,
+      maxs: data.maxs.slice(),
+      mins: data.mins.slice(),
+    };
+  }
+  if (!data || data.byteLength !== count * 6) {
+    throw new Error(`Packed sort coordinates length mismatch for ${count} points`);
+  }
+  return {
+    buffer: dataBufferOf(data),
+    format: 'packed-log-u8',
+    maxs: datasetScene.sog.meta.means.maxs,
+    mins: datasetScene.sog.meta.means.mins,
+  };
 }
 
 function snapshot(camera) {
@@ -26,8 +60,9 @@ function snapshot(camera) {
     aspect: Number(camera.aspect) || 1,
     fovY: Number(camera.fovY) || 55 * Math.PI / 180,
     far: Number(camera.far) || 3000,
-    sampleStride: Math.max(1, Math.floor(Number(camera.sampleStride) || 1)),
+    sampleStride: normalizeSampleStride(camera.sampleStride),
     cullToFrustum: camera.cullToFrustum !== false,
+    enableDepthSorting: camera.enableDepthSorting === true,
     reason: camera.reason || 'settled',
   };
 }
@@ -40,11 +75,15 @@ function createSortController(scene, means, callbacks = {}) {
   let restartCount = 0;
   let active = null;
   let consecutiveRootSorts = 0;
+  let detailInitTimer = null;
+  const detailInitQueue = [];
   const datasets = {};
   const stats = {
     requests: 0,
     results: 0,
     lastDuration: 0,
+    lastTransferChunks: 0,
+    lastTransferDuration: 0,
     lastWorkerDuration: 0,
     lastVisibleCount: 0,
     lastTotalCount: 0,
@@ -52,13 +91,15 @@ function createSortController(scene, means, callbacks = {}) {
   };
 
   function makeDataset(id, datasetScene, datasetMeans, datasetCallbacks) {
+    const sortPayload = sortPayloadOf(datasetScene, datasetMeans);
     return {
       id,
       callbacks: datasetCallbacks || {},
       count: datasetScene.sog.meta.count,
-      meansBuffer: meansBufferOf(datasetMeans),
-      mins: datasetScene.sog.meta.means.mins,
-      maxs: datasetScene.sog.meta.means.maxs,
+      sortBuffer: sortPayload.buffer,
+      sortFormat: sortPayload.format,
+      mins: sortPayload.mins,
+      maxs: sortPayload.maxs,
       pending: null,
       queuedAt: 0,
       ready: false,
@@ -66,18 +107,78 @@ function createSortController(scene, means, callbacks = {}) {
       requestId: 0,
       busy: false,
       failed: false,
+      initOffset: 0,
+      initStarted: false,
     };
   }
 
   datasets.root = makeDataset('root', scene, means, callbacks);
 
+  function scheduleDetailInit() {
+    if (disposed || !worker || detailInitTimer || !detailInitQueue.length) return;
+    detailInitTimer = setTimeout(flushDetailInitChunk, DETAIL_INIT_INTERVAL_MS);
+  }
+
+  function flushDetailInitChunk() {
+    detailInitTimer = null;
+    if (disposed || !worker) return;
+    let dataset = null;
+    while (detailInitQueue.length && !dataset) {
+      const datasetId = detailInitQueue.shift();
+      const candidate = datasets[datasetId];
+      if (candidate && !candidate.released && !candidate.ready) dataset = candidate;
+    }
+    if (!dataset) return;
+    try {
+      if (!dataset.initStarted) {
+        worker.postMessage({
+          type: 'init-start',
+          datasetId: dataset.id,
+          byteLength: dataset.sortBuffer.byteLength,
+          count: dataset.count,
+          format: dataset.sortFormat,
+          mins: dataset.mins,
+          maxs: dataset.maxs,
+        });
+        dataset.initStarted = true;
+        dataset.initOffset = 0;
+      }
+      const end = Math.min(
+        dataset.sortBuffer.byteLength,
+        dataset.initOffset + DETAIL_INIT_CHUNK_BYTES,
+      );
+      const chunkBuffer = dataset.sortBuffer.slice(dataset.initOffset, end);
+      worker.postMessage({
+        type: 'init-chunk',
+        datasetId: dataset.id,
+        offset: dataset.initOffset,
+        sortDataBuffer: chunkBuffer,
+      });
+      dataset.initOffset = end;
+      if (dataset.initOffset < dataset.sortBuffer.byteLength) {
+        detailInitQueue.push(dataset.id);
+      }
+      scheduleDetailInit();
+    } catch (error) {
+      restartWorker(error);
+    }
+  }
+
   function postInit(dataset) {
     if (!worker || disposed || dataset.released) return;
+    if (dataset.id !== 'root') {
+      dataset.initOffset = 0;
+      dataset.initStarted = false;
+      if (!detailInitQueue.includes(dataset.id)) detailInitQueue.push(dataset.id);
+      scheduleDetailInit();
+      return;
+    }
     worker.postMessage({
       type: 'init',
       datasetId: dataset.id,
       count: dataset.count,
-      meansBuffer: dataset.meansBuffer,
+      format: dataset.sortFormat,
+      sortDataBuffer: dataset.sortBuffer,
       mins: dataset.mins,
       maxs: dataset.maxs,
     });
@@ -127,6 +228,7 @@ function createSortController(scene, means, callbacks = {}) {
         fovY: request.camera.fovY,
         far: request.camera.far,
         sampleStride: request.camera.sampleStride,
+        enableDepthSorting: request.camera.enableDepthSorting,
         // Sort the current and predicted view together. Padding covers large
         // splats at the edge without paying for the full front hemisphere.
         cullToFrustum: request.camera.cullToFrustum,
@@ -148,7 +250,7 @@ function createSortController(scene, means, callbacks = {}) {
     if (!dataset.pending) dataset.queuedAt = Date.now();
     dataset.pending = { camera: snapshot(camera), requestId: dataset.requestId };
     pump();
-    return !!(active && active.datasetId === datasetId);
+    return true;
   }
 
   function notifyError(error) {
@@ -165,6 +267,9 @@ function createSortController(scene, means, callbacks = {}) {
 
   function releaseDataset(id) {
     if (!id || id === 'root' || !datasets[id]) return;
+    for (let index = detailInitQueue.length - 1; index >= 0; index -= 1) {
+      if (detailInitQueue[index] === id) detailInitQueue.splice(index, 1);
+    }
     if (worker) {
       try { worker.postMessage({ type: 'release', datasetId: id }); } catch (error) { /* worker is stopping */ }
     }
@@ -179,6 +284,85 @@ function createSortController(scene, means, callbacks = {}) {
       dataset.queuedAt = 0;
     });
     if (active && active.datasetId !== 'root') active.cancelled = true;
+  }
+
+  function discardWorkerResult(request) {
+    if (!worker || !request || !request.resultMeta || !request.resultMeta.visibleCount) return;
+    try {
+      worker.postMessage({
+        type: 'discard-result',
+        datasetId: request.datasetId,
+        generation: request.generation,
+        requestId: request.requestId,
+      });
+    } catch (error) {
+      // Worker restart will release its pending result.
+    }
+  }
+
+  function finishActiveResult(dataset) {
+    if (!active || active.datasetId !== dataset.id) return;
+    const completedRequest = active;
+    const metadata = completedRequest.resultMeta || {};
+    const indexes = completedRequest.resultIndexes || new Uint32Array(0);
+    dataset.busy = false;
+    active = null;
+    stats.results += 1;
+    stats.lastDuration = metadata.duration || 0;
+    stats.lastTransferChunks = completedRequest.resultChunks || 0;
+    stats.lastTransferDuration = completedRequest.resultTransferStartedAt
+      ? Date.now() - completedRequest.resultTransferStartedAt
+      : 0;
+    stats.lastWorkerDuration = metadata.workerDuration || 0;
+    stats.lastVisibleCount = metadata.visibleCount || 0;
+    stats.lastTotalCount = metadata.totalCount || dataset.count;
+    if (dataset.id === 'root') restartCount = 0;
+    if (dataset.released) {
+      releaseDataset(dataset.id);
+      pump();
+      return;
+    }
+    if (!completedRequest.cancelled && dataset.callbacks.onSorted) {
+      dataset.callbacks.onSorted(indexes, stats, completedRequest);
+    }
+    // Give rendering one event-loop turn before the next dataset consumes CPU.
+    setTimeout(pump, 0);
+  }
+
+  function beginResultTransfer(dataset, message) {
+    active.resultMeta = message;
+    active.resultIndexes = new Uint32Array(Math.max(0, Number(message.visibleCount) || 0));
+    active.resultReceived = 0;
+    active.resultChunkRequested = false;
+    active.resultChunks = 0;
+    active.resultTransferStartedAt = Date.now();
+    if (active.cancelled || dataset.released) {
+      discardWorkerResult(active);
+      finishActiveResult(dataset);
+      return;
+    }
+    if (!active.resultIndexes.length) finishActiveResult(dataset);
+  }
+
+  function appendResultChunk(dataset, message) {
+    if (!active.resultIndexes || !active.resultMeta) return;
+    const chunk = new Uint32Array(message.indexesBuffer || new ArrayBuffer(0));
+    const offset = Math.max(0, Math.floor(Number(message.offset) || 0));
+    const expectedOffset = active.resultReceived || 0;
+    if (offset !== expectedOffset || offset + chunk.length > active.resultIndexes.length) {
+      restartWorker(new Error('Sort result chunk sequence is invalid'));
+      return;
+    }
+    active.resultIndexes.set(chunk, offset);
+    active.resultReceived += chunk.length;
+    active.resultChunks += 1;
+    active.resultChunkRequested = false;
+    if (!message.done) return;
+    if (active.resultReceived !== active.resultIndexes.length) {
+      restartWorker(new Error('Sort result transfer ended before all indexes arrived'));
+      return;
+    }
+    finishActiveResult(dataset);
   }
 
   function attach(nextWorker) {
@@ -203,27 +387,11 @@ function createSortController(scene, means, callbacks = {}) {
         || active.datasetId !== dataset.id
         || active.generation !== message.generation
         || active.requestId !== message.requestId) return;
-      if (message.type !== 'sorted') return;
-      const completedRequest = active;
-      dataset.busy = false;
-      active = null;
-      stats.results += 1;
-      stats.lastDuration = message.duration || 0;
-      stats.lastWorkerDuration = message.workerDuration || 0;
-      stats.lastVisibleCount = message.visibleCount || 0;
-      stats.lastTotalCount = message.totalCount || dataset.count;
-      if (dataset.id === 'root') restartCount = 0;
-      if (dataset.released) {
-        releaseDataset(dataset.id);
-        pump();
-        return;
+      if (message.type === 'sorted-start') {
+        beginResultTransfer(dataset, message);
+      } else if (message.type === 'sorted-chunk') {
+        appendResultChunk(dataset, message);
       }
-      if (!completedRequest.cancelled && dataset.callbacks.onSorted) {
-        dataset.callbacks.onSorted(new Uint32Array(message.indexesBuffer), stats, completedRequest);
-      }
-      // Give the renderer one event-loop turn to stage this result before the
-      // worker starts consuming CPU for the next LOD dataset.
-      setTimeout(pump, 0);
     });
     nextWorker.onError((error) => {
       if (disposed || worker !== nextWorker) return;
@@ -248,9 +416,14 @@ function createSortController(scene, means, callbacks = {}) {
     worker = nextWorker;
     failed = false;
     active = null;
+    if (detailInitTimer) clearTimeout(detailInitTimer);
+    detailInitTimer = null;
+    detailInitQueue.length = 0;
     Object.values(datasets).forEach((dataset) => {
       dataset.ready = false;
       dataset.busy = false;
+      dataset.initOffset = 0;
+      dataset.initStarted = false;
     });
     attach(nextWorker);
     Object.values(datasets).forEach(postInit);
@@ -286,6 +459,48 @@ function createSortController(scene, means, callbacks = {}) {
     }
   }
 
+  function flushResultTransfer(maxIndices = RESULT_TRANSFER_CHUNK_INDICES) {
+    if (disposed
+      || failed
+      || !worker
+      || !active
+      || !active.resultIndexes
+      || active.resultChunkRequested) return 0;
+    const dataset = datasets[active.datasetId];
+    if (!dataset) return 0;
+    if (active.cancelled || dataset.released) {
+      discardWorkerResult(active);
+      finishActiveResult(dataset);
+      return 0;
+    }
+    const remaining = active.resultIndexes.length - (active.resultReceived || 0);
+    if (remaining <= 0) {
+      finishActiveResult(dataset);
+      return 0;
+    }
+    const count = Math.min(
+      remaining,
+      RESULT_TRANSFER_MAX_CHUNK_INDICES,
+      Math.max(1, Math.floor(Number(maxIndices) || RESULT_TRANSFER_CHUNK_INDICES)),
+    );
+    active.resultChunkRequested = true;
+    try {
+      worker.postMessage({
+        type: 'result-chunk',
+        datasetId: active.datasetId,
+        generation: active.generation,
+        requestId: active.requestId,
+        offset: active.resultReceived || 0,
+        maxCount: count,
+      });
+      return count;
+    } catch (error) {
+      active.resultChunkRequested = false;
+      restartWorker(error);
+      return 0;
+    }
+  }
+
   function addDataset(id, datasetScene, datasetMeans, datasetCallbacks = {}) {
     if (disposed || !id || id === 'root') throw new Error('Invalid sort dataset id');
     if (datasets[id]) throw new Error(`Sort dataset already exists: ${id}`);
@@ -304,7 +519,12 @@ function createSortController(scene, means, callbacks = {}) {
         releaseDataset(id);
       },
       getStats() {
-        return { ...stats, busy: !!(active && active.datasetId === id), ready: dataset.ready };
+        return {
+          ...stats,
+          busy: !!(active && active.datasetId === id),
+          queued: !!dataset.pending,
+          ready: dataset.ready,
+        };
       },
       request(camera) { return submit(id, camera); },
     };
@@ -324,17 +544,27 @@ function createSortController(scene, means, callbacks = {}) {
     dispose() {
       disposed = true;
       active = null;
+      if (detailInitTimer) clearTimeout(detailInitTimer);
+      detailInitTimer = null;
+      detailInitQueue.length = 0;
       Object.values(datasets).forEach((dataset) => { dataset.pending = null; });
       if (worker) worker.terminate();
       worker = null;
     },
+    flushResultTransfer,
     getStats() {
       const root = datasets.root;
       return {
         ...stats,
+        activeDatasetId: active ? active.datasetId : null,
         busy: !!active,
         failed,
+        queued: Object.values(datasets).filter((dataset) => !!dataset.pending).length,
         ready: !!(root && root.ready),
+        transferRemaining: active && active.resultIndexes
+          ? Math.max(0, active.resultIndexes.length - (active.resultReceived || 0))
+          : 0,
+        transferring: !!(active && active.resultIndexes),
       };
     },
     request(camera) { return submit('root', camera); },

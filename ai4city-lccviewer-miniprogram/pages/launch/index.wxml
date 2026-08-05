@@ -1,3 +1,25 @@
 <view class="launch-screen">
-  <view class="launch-spinner"></view>
+  <view class="launch-content">
+    <view class="launch-heading">
+      <text class="launch-brand">LCCViewer</text>
+      <text class="launch-name">山海览城</text>
+    </view>
+
+    <view wx:if="{{!hasError}}" class="launch-loading">
+      <view class="launch-spinner"></view>
+      <text class="launch-status">{{statusText}}</text>
+      <view class="launch-progress-track">
+        <view class="launch-progress-fill" style="width: {{progress}}%;"></view>
+      </view>
+      <text class="launch-percent">{{progress}}%</text>
+    </view>
+
+    <view wx:else class="launch-error">
+      <text class="launch-error-title">暂时无法进入场景</text>
+      <text class="launch-error-detail">{{errorDetail}}</text>
+      <button class="launch-retry" bindtap="retryLaunch">重新加载</button>
+    </view>
+  </view>
+
+  <text class="launch-footer">3DGS 城市场景浏览</text>
 </view>

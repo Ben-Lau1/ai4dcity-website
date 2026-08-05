@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+    <meta name="theme-color" content="#080b0e" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <title>LCCViewer Next</title>
+  </head>
+  <body>
+    <main id="viewer" class="viewer-shell">
+      <canvas id="viewer-canvas" aria-label="三维场景"></canvas>
+
+      <header class="topbar">
+        <div class="brand-block">
+          <strong>LCCViewer</strong>
+          <span id="scene-title">五园连通</span>
+        </div>
+
+        <div class="mode-switch" role="tablist" aria-label="浏览模式">
+          <button type="button" data-mode="orbit" role="tab">
+            <i data-lucide="orbit"></i><span>自由</span>
+          </button>
+          <button type="button" data-mode="firstPerson" role="tab" class="active">
+            <i data-lucide="scan-face"></i><span>第一人称</span>
+          </button>
+          <button type="button" data-mode="avatar" role="tab">
+            <i data-lucide="person-standing"></i><span>第三人称</span>
+          </button>
+        </div>
+
+        <div class="command-bar">
+          <button type="button" id="reset-view" class="icon-button" aria-label="返回起点" title="返回起点">
+            <i data-lucide="locate-fixed"></i>
+          </button>
+          <button type="button" id="trajectory-toggle" class="icon-button" aria-label="播放轨迹" title="播放轨迹">
+            <i data-lucide="play"></i>
+          </button>
+          <button type="button" id="scene-menu-toggle" class="icon-button" aria-label="切换场景" title="切换场景">
+            <i data-lucide="map"></i>
+          </button>
+          <button type="button" id="help-toggle" class="icon-button" aria-label="操作帮助" title="操作帮助">
+            <i data-lucide="circle-help"></i>
+          </button>
+          <button type="button" id="settings-toggle" class="icon-button" aria-label="设置" title="设置">
+            <i data-lucide="settings-2"></i>
+          </button>
+        </div>
+      </header>
+
+      <section id="scene-menu" class="popover scene-menu hidden" aria-label="场景列表"></section>
+
+      <aside id="settings-panel" class="side-panel hidden" aria-label="设置">
+        <div class="panel-heading">
+          <div><span class="panel-kicker">VIEWER</span><h2>设置</h2></div>
+          <button type="button" class="icon-button panel-close" aria-label="关闭设置"><i data-lucide="x"></i></button>
+        </div>
+        <div class="setting-row">
+          <div><strong>场景碰撞</strong><span>贴合地面并阻挡建筑</span></div>
+          <label class="switch"><input id="collision-toggle" type="checkbox" checked /><span></span></label>
+        </div>
+        <div class="setting-group">
+          <strong>环境</strong>
+          <div class="segmented-control" id="environment-control">
+            <button type="button" data-value="dark" class="active">深色</button>
+            <button type="button" data-value="sky">天空</button>
+          </div>
+        </div>
+        <div class="setting-group">
+          <strong>渲染质量</strong>
+          <div class="segmented-control" id="quality-control">
+            <button type="button" data-value="2">均衡</button>
+            <button type="button" data-value="3">清晰</button>
+            <button type="button" data-value="4" class="active">最高</button>
+          </div>
+        </div>
+      </aside>
+
+      <section id="help-panel" class="help-panel hidden" aria-label="操作帮助">
+        <div class="panel-heading">
+          <div><span class="panel-kicker">CONTROLS</span><h2>操作</h2></div>
+          <button type="button" class="icon-button panel-close" aria-label="关闭帮助"><i data-lucide="x"></i></button>
+        </div>
+        <div class="help-grid">
+          <article><i data-lucide="mouse-pointer-2"></i><strong>观察</strong><span>拖动旋转，滚轮或双指缩放</span></article>
+          <article><i data-lucide="move"></i><strong>移动</strong><span>WASD 或左侧触控摇杆</span></article>
+          <article><i data-lucide="chevrons-up"></i><strong>跳跃</strong><span>空格键或右侧跳跃按钮</span></article>
+          <article><i data-lucide="gauge"></i><strong>加速</strong><span>按住 Shift 跑动</span></article>
+        </div>
+      </section>
+
+      <div id="joystick" class="joystick hidden" aria-hidden="true"><div class="joystick-thumb"></div></div>
+      <button type="button" id="jump-button" class="jump-button hidden" aria-label="跳跃"><i data-lucide="chevrons-up"></i></button>
+
+      <div class="status-rail">
+        <span id="load-state"><b class="status-dot"></b>准备场景</span>
+        <span id="mode-state">第一人称</span>
+        <span id="fps-state">-- FPS</span>
+      </div>
+
+      <section id="loading-overlay" class="loading-overlay">
+        <div class="loading-brand">LCCViewer</div>
+        <div class="loading-copy">
+          <span id="loading-stage">初始化渲染器</span>
+          <strong id="loading-percent">0%</strong>
+        </div>
+        <div class="loading-track"><div id="loading-progress"></div></div>
+      </section>
+
+      <section id="error-panel" class="error-panel hidden" role="alert">
+        <i data-lucide="triangle-alert"></i>
+        <div><strong>场景无法加载</strong><span id="error-message"></span></div>
+        <button type="button" id="retry-load">重试</button>
+      </section>
+    </main>
+
+    <script src="/lccviewer/libs/lcc-0.6.1.umd.js"></script>
+    <script type="module" src="/src/lccviewer-next/main.js"></script>
+  </body>
+</html>

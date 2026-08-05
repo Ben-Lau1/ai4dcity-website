@@ -36,7 +36,10 @@
       { "type": "folder", "value": "vendor" },
       { "type": "folder", "value": "scripts" },
       { "type": "folder", "value": "tools" },
+      { "type": "folder", "value": "tests" },
+      { "type": "folder", "value": "pages/launch" },
       { "type": "folder", "value": "pages/index" },
+      { "type": "file", "value": "README.md" },
       { "type": "file", "value": "workers/lcc-bvh.js" },
       { "type": "file", "value": "workers/lcc-cpu-sort.js" },
       { "type": "file", "value": "workers/lcc-modern-sort.js" }

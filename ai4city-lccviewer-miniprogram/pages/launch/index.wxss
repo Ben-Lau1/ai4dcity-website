@@ -1,9 +1,48 @@
 .launch-screen {
   align-items: center;
   background: #090b0f;
+  box-sizing: border-box;
   display: flex;
   height: 100vh;
   justify-content: center;
+  padding: 64rpx 48rpx;
+  position: relative;
+}
+
+.launch-content {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.launch-heading {
+  align-items: baseline;
+  display: flex;
+  margin-bottom: 96rpx;
+}
+
+.launch-brand {
+  color: #f5f7fa;
+  font-size: 48rpx;
+  font-weight: 650;
+  letter-spacing: 0;
+}
+
+.launch-name {
+  color: #8f99a8;
+  font-size: 25rpx;
+  letter-spacing: 0;
+  margin-left: 20rpx;
+}
+
+.launch-loading,
+.launch-error {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  min-height: 220rpx;
+  width: 100%;
 }
 
 .launch-spinner {
@@ -13,6 +52,78 @@
   border-top-color: #54d6a0;
   height: 48rpx;
   width: 48rpx;
+}
+
+.launch-status {
+  color: #c8ced7;
+  font-size: 27rpx;
+  letter-spacing: 0;
+  margin-top: 32rpx;
+}
+
+.launch-progress-track {
+  background: #252a32;
+  height: 6rpx;
+  margin-top: 30rpx;
+  max-width: 72vw;
+  overflow: hidden;
+  width: 440rpx;
+}
+
+.launch-progress-fill {
+  background: #54d6a0;
+  height: 100%;
+  transition: width 160ms linear;
+}
+
+.launch-percent {
+  color: #727c8b;
+  font-size: 22rpx;
+  letter-spacing: 0;
+  margin-top: 14rpx;
+}
+
+.launch-error-title {
+  color: #f5f7fa;
+  font-size: 32rpx;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.launch-error-detail {
+  color: #9da6b4;
+  font-size: 25rpx;
+  letter-spacing: 0;
+  line-height: 1.6;
+  margin-top: 18rpx;
+  text-align: center;
+}
+
+.launch-retry {
+  background: #e8edf3;
+  border-radius: 6rpx;
+  color: #11151b;
+  font-size: 27rpx;
+  font-weight: 600;
+  height: 76rpx;
+  line-height: 76rpx;
+  margin-top: 36rpx;
+  padding: 0 44rpx;
+}
+
+.launch-retry::after {
+  border: 0;
+}
+
+.launch-footer {
+  bottom: calc(42rpx + env(safe-area-inset-bottom));
+  color: #596270;
+  font-size: 22rpx;
+  left: 0;
+  letter-spacing: 0;
+  position: absolute;
+  right: 0;
+  text-align: center;
 }
 
 @keyframes spin {

@@ -40,6 +40,13 @@ async function loadManifest() {
   return JSON.parse(source.slice(start).trim().replace(/;$/, ''));
 }
 
+async function loadScene(entry) {
+  const pathname = new URL(entry.manifestUrl).pathname;
+  const response = await fetch(`/remote${pathname}`);
+  if (!response.ok) throw new Error(`Manifest: HTTP ${response.status}`);
+  return response.json();
+}
+
 async function decodeTexture(scene, name) {
   const entry = scene.sog.entries[name];
   const remotePath = new URL(scene.sog.url).pathname;
@@ -135,13 +142,28 @@ function readPixels(gl, width, height) {
   return pixels;
 }
 
+function benchmarkRenderer(gl, renderer, matrices, camera, frames = 8) {
+  renderer.render(matrices, camera);
+  renderer.render(matrices, camera);
+  gl.finish();
+  const startedAt = performance.now();
+  for (let frame = 0; frame < frames; frame += 1) {
+    renderer.render(matrices, camera);
+  }
+  gl.finish();
+  return (performance.now() - startedAt) / frames;
+}
+
 (async () => {
     const status = document.querySelector('#status');
   try {
     const scenes = await loadManifest();
-    const sceneId = new URLSearchParams(location.search).get('scene') || 'KPJ-08-4';
-    const scene = scenes[sceneId];
-    if (!scene) throw new Error(`Unknown scene: ${sceneId}`);
+    const search = new URLSearchParams(location.search);
+    const sceneId = search.get('scene') || 'KPJ-08-4';
+    const sampleStride = Math.max(1, Number(search.get('stride')) || 4);
+    const entry = scenes[sceneId];
+    if (!entry) throw new Error(`Unknown scene: ${sceneId}`);
+    const scene = await loadScene(entry);
     const canvas = document.querySelector('#smoke');
     canvas.width = 488;
     canvas.height = 1055;
@@ -153,21 +175,27 @@ function readPixels(gl, width, height) {
     const images = Object.fromEntries(decoded);
     const width = images['means_l.webp'].image.width;
     const height = images['means_l.webp'].image.height;
-    const renderer = new window.NativeSplatRenderer(gl, canvas.width, canvas.height);
-    renderer.load(scene, { count: scene.sog.meta.count, width, height, images });
     const eye = [scene.start[0], scene.start[1] + 1.7, scene.start[2]];
     const target = [scene.next[0], scene.next[1] + 1.7, scene.next[2]];
     const sorted = sortIndexes(scene, images, eye, target);
-    renderer.updateIndexes(sorted.indexes);
+    const sampledIndexes = new Uint32Array(
+      Array.from(sorted.indexes).filter((index) => index % sampleStride === 0),
+    );
+    const renderer = new window.NativeSplatRenderer(gl, canvas.width, canvas.height, {
+      enableGpuPredecode: false,
+      indexStride: sampleStride,
+    });
+    renderer.load(scene, { count: scene.sog.meta.count, width, height, images });
+    renderer.updateIndexes(sampledIndexes, { preSampled: true });
     const fullCount = renderer.count;
-    const halfIndexes = sorted.indexes.subarray(0, Math.floor(sorted.indexes.length / 2));
-    renderer.updateIndexes(halfIndexes);
+    const halfIndexes = sampledIndexes.subarray(0, Math.floor(sampledIndexes.length / 2));
+    renderer.updateIndexes(halfIndexes, { preSampled: true });
     if (renderer.count !== fullCount) throw new Error('Deferred index upload swapped too early');
     renderer.flushIndexUpload(1);
     if (renderer.count !== fullCount) throw new Error('Partial index upload swapped too early');
     renderer.flushIndexUpload(Number.POSITIVE_INFINITY);
     if (renderer.count !== halfIndexes.length) throw new Error('Deferred index upload did not commit');
-    renderer.updateIndexes(sorted.indexes, { immediate: true });
+    renderer.updateIndexes(sampledIndexes, { immediate: true, preSampled: true });
     const matrices = {
       projection: perspective(55 * Math.PI / 180, canvas.width / canvas.height, 0.1, 3000),
       view: lookAt(eye, target),
@@ -175,22 +203,79 @@ function readPixels(gl, width, height) {
     renderer.render(matrices, { getMode: () => 'orbit' });
     gl.finish();
     const slowPixels = readPixels(gl, canvas.width, canvas.height);
-    if (!renderer.prepareFastPath()) throw new Error('GPU predecode fast path unavailable');
-    renderer.render(matrices, { getMode: () => 'orbit' });
+    renderer.dispose();
+
+    const fastRenderer = new window.NativeSplatRenderer(gl, canvas.width, canvas.height, {
+      enableGpuPredecode: true,
+      enableProjectedFastPath: true,
+      indexStride: sampleStride,
+    });
+    fastRenderer.load(scene, { count: scene.sog.meta.count, width, height, images });
+    fastRenderer.updateIndexes(sampledIndexes, { immediate: true, preSampled: true });
+    for (let step = 0; step < 128 && !fastRenderer.hasFastPath(); step += 1) {
+      fastRenderer.prepareFastPath(64);
+    }
+    if (!fastRenderer.hasFastPath()) throw new Error('GPU predecode fast path unavailable');
+    const cameraStub = { getMode: () => 'orbit' };
+    const calibration = fastRenderer.calibrateProjectionPath(matrices, cameraStub);
+    fastRenderer.projectionPathEnabled = false;
+    fastRenderer.render(matrices, cameraStub);
+    gl.finish();
+    const directPixels = readPixels(gl, canvas.width, canvas.height);
+    const directMilliseconds = benchmarkRenderer(gl, fastRenderer, matrices, cameraStub);
+    fastRenderer.projectionPathEnabled = true;
+    fastRenderer.render(matrices, cameraStub);
     gl.finish();
     const pixels = readPixels(gl, canvas.width, canvas.height);
+    const projectedMilliseconds = benchmarkRenderer(gl, fastRenderer, matrices, cameraStub);
+    if (fastRenderer.getDiagnostics().path !== 'fast-tf28-float') {
+      throw new Error(`Float TF path unavailable: ${fastRenderer.getDiagnostics().projectionError}`);
+    }
+    fastRenderer.releaseProjectionPath();
+    fastRenderer.projectionBackend = 'mrt';
+    fastRenderer.render(matrices, cameraStub);
+    gl.finish();
+    const mrtPixels = readPixels(gl, canvas.width, canvas.height);
+    const mrtMilliseconds = benchmarkRenderer(gl, fastRenderer, matrices, cameraStub);
+    if (fastRenderer.getDiagnostics().path !== 'fast-mrt32-batch128') {
+      throw new Error(`MRT projection path unavailable: ${fastRenderer.getDiagnostics().projectionError}`);
+    }
+    const decodedTextures = fastRenderer.decodedTextures.slice();
+    const reversedIndexes = sampledIndexes.slice().reverse();
+    fastRenderer.updateIndexes(reversedIndexes, { immediate: true, preSampled: true });
+    if (!fastRenderer.hasFastPath()
+      || decodedTextures.some((texture, index) => (
+        fastRenderer.decodedTextures[index] !== texture
+      ))) {
+      throw new Error('Camera re-sort rebuilt or disabled the stable GPU cache');
+    }
     let changed = 0;
     let difference = 0;
+    let projectionDifference = 0;
+    let mrtDifference = 0;
     for (let index = 0; index < pixels.length; index += 4) {
       if (pixels[index] !== 9 || pixels[index + 1] !== 11 || pixels[index + 2] !== 14) changed += 1;
       difference += Math.abs(pixels[index] - slowPixels[index]);
       difference += Math.abs(pixels[index + 1] - slowPixels[index + 1]);
       difference += Math.abs(pixels[index + 2] - slowPixels[index + 2]);
+      projectionDifference += Math.abs(pixels[index] - directPixels[index]);
+      projectionDifference += Math.abs(pixels[index + 1] - directPixels[index + 1]);
+      projectionDifference += Math.abs(pixels[index + 2] - directPixels[index + 2]);
+      mrtDifference += Math.abs(mrtPixels[index] - directPixels[index]);
+      mrtDifference += Math.abs(mrtPixels[index + 1] - directPixels[index + 1]);
+      mrtDifference += Math.abs(mrtPixels[index + 2] - directPixels[index + 2]);
     }
     const meanDifference = difference / (canvas.width * canvas.height * 3);
-    const diagnostics = renderer.getDiagnostics();
-    status.textContent = `OK\n${scene.sog.meta.count} splats\n${diagnostics.path}\n${Math.round(sorted.milliseconds)}ms sort\n${meanDifference.toFixed(3)} mean RGB delta\n${changed} changed pixels`;
-    document.title = changed > 500 && meanDifference < 0.5
+    const meanProjectionDifference = (
+      projectionDifference / (canvas.width * canvas.height * 3)
+    );
+    const meanMrtDifference = mrtDifference / (canvas.width * canvas.height * 3);
+    const diagnostics = fastRenderer.getDiagnostics();
+    status.textContent = `OK\n${scene.sog.meta.count} splats\nTF + MRT validated\nauto ${calibration.backend} (${calibration.directMs.toFixed(2)}/${calibration.projectedMs.toFixed(2)}ms)\n${Math.round(sorted.milliseconds)}ms sort\n${directMilliseconds.toFixed(2)}ms direct\n${projectedMilliseconds.toFixed(2)}ms float TF\n${mrtMilliseconds.toFixed(2)}ms MRT\n${meanDifference.toFixed(3)} source RGB delta\n${meanProjectionDifference.toFixed(3)} TF RGB delta\n${meanMrtDifference.toFixed(3)} MRT RGB delta\n${changed} changed pixels`;
+    document.title = changed > 500
+      && meanDifference < 0.8
+      && meanProjectionDifference < 0.8
+      && meanMrtDifference < 0.8
       ? 'PASS Native Splat Smoke'
       : 'FAIL Native Splat Smoke';
   } catch (error) {

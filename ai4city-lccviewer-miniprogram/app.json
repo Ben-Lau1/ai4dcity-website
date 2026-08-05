@@ -1,15 +1,6 @@
 {
   "pages": [
-    "pages/launch/index"
-  ],
-  "subpackages": [
-    {
-      "root": "native-v2",
-      "name": "native-viewer-v2",
-      "pages": [
-        "index/index"
-      ]
-    }
+    "native-v2/index/index"
   ],
   "workers": "workers",
   "window": {

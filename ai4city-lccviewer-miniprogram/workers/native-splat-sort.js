@@ -2,15 +2,25 @@
 
 const BUCKET_COUNT = 65536;
 const datasets = {};
+const pendingInitializations = {};
+const pendingResults = {};
 const buckets = new Uint32Array(BUCKET_COUNT);
 const offsets = new Uint32Array(BUCKET_COUNT);
 const DEFAULT_FOV_Y = 55 * Math.PI / 180;
 const DEFAULT_FAR = 3000;
 const FRUSTUM_GUARD = 24;
+const SAMPLE_STRIDE_SCALE = 2;
 let scratchCapacity = 0;
 let scratchDepths = new Float32Array(0);
 let scratchKeys = new Uint16Array(0);
 let scratchVisible = new Uint32Array(0);
+
+function normalizeSampleStride(value) {
+  const numeric = Number(value);
+  const resolved = Number.isFinite(numeric) && numeric > 0 ? numeric : 1;
+  return Math.max(1, Math.min(12, Math.round(resolved * SAMPLE_STRIDE_SCALE)
+    / SAMPLE_STRIDE_SCALE));
+}
 
 function normalize(vector) {
   const length = Math.hypot(vector[0], vector[1], vector[2]) || 1;
@@ -37,15 +47,10 @@ function decodeCoordinate(value) {
   return Math.sign(value) * (Math.exp(Math.abs(value)) - 1);
 }
 
-function initialize(data) {
-  const datasetId = data.datasetId || 'root';
-  const count = data.count;
-  const packed = new Uint8Array(data.meansBuffer);
+function initializePacked(datasetId, count, packed, mins, maxs) {
   if (!count || packed.length < count * 6) {
     throw new Error('Packed means buffer is incomplete');
   }
-  const mins = data.mins;
-  const maxs = data.maxs;
   const centers = new Float32Array(count * 3);
   for (let index = 0; index < count; index += 1) {
     const source = index * 6;
@@ -62,6 +67,82 @@ function initialize(data) {
   }
   datasets[datasetId] = { centers, count };
   worker.postMessage({ type: 'ready', datasetId, count });
+}
+
+function initializeDataset(datasetId, count, buffer, format, mins, maxs) {
+  const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
+  if (format !== 'uint16x3-linear') {
+    initializePacked(datasetId, count, bytes, mins, maxs);
+    return;
+  }
+  if (!count || bytes.byteLength !== count * 6) {
+    throw new Error('Linear sort centers buffer is incomplete');
+  }
+  const exactBuffer = bytes.byteOffset === 0
+    && bytes.byteLength === bytes.buffer.byteLength
+    ? bytes.buffer
+    : bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+  const resolvedMins = mins.map(Number);
+  const scales = maxs.map((value, index) => (
+    (Number(value) - resolvedMins[index]) / 65535
+  ));
+  datasets[datasetId] = {
+    count,
+    mins: resolvedMins,
+    quantized: new Uint16Array(exactBuffer),
+    scales,
+  };
+  worker.postMessage({ type: 'ready', datasetId, count });
+}
+
+function initialize(data) {
+  const datasetId = data.datasetId || 'root';
+  initializeDataset(
+    datasetId,
+    data.count,
+    data.sortDataBuffer || data.meansBuffer,
+    data.format || 'packed-log-u8',
+    data.mins,
+    data.maxs,
+  );
+}
+
+function beginChunkedInitialization(data) {
+  const datasetId = data.datasetId;
+  const byteLength = Math.max(0, Math.floor(Number(data.byteLength) || 0));
+  if (!datasetId || !byteLength || byteLength < data.count * 6) {
+    throw new Error('Chunked packed means metadata is incomplete');
+  }
+  pendingInitializations[datasetId] = {
+    count: data.count,
+    format: data.format || 'packed-log-u8',
+    maxs: data.maxs,
+    mins: data.mins,
+    payload: new Uint8Array(byteLength),
+    received: 0,
+  };
+}
+
+function appendInitializationChunk(data) {
+  const pending = pendingInitializations[data.datasetId];
+  if (!pending) return;
+  const chunk = new Uint8Array(data.sortDataBuffer || data.meansBuffer);
+  const offset = Math.max(0, Math.floor(Number(data.offset) || 0));
+  if (offset + chunk.length > pending.payload.length) {
+    throw new Error('Chunked packed means payload exceeds its allocation');
+  }
+  pending.payload.set(chunk, offset);
+  pending.received += chunk.length;
+  if (pending.received < pending.payload.length) return;
+  delete pendingInitializations[data.datasetId];
+  initializeDataset(
+    data.datasetId,
+    pending.count,
+    pending.payload,
+    pending.format,
+    pending.mins,
+    pending.maxs,
+  );
 }
 
 function makeFrustum(forward, aspect, fovY, padding) {
@@ -108,9 +189,13 @@ function sort(data) {
   const datasetId = data.datasetId || 'root';
   const dataset = datasets[datasetId];
   if (!dataset) return;
-  const { centers, count } = dataset;
-  const sampleStride = Math.max(1, Math.floor(Number(data.sampleStride) || 1));
-  const sampledCapacity = Math.ceil(count / sampleStride);
+  delete pendingResults[datasetId];
+  const {
+    centers, count, mins, quantized, scales,
+  } = dataset;
+  const sampleStride = normalizeSampleStride(data.sampleStride);
+  const sampleStrideUnits = Math.round(sampleStride * SAMPLE_STRIDE_SCALE);
+  const sampledCapacity = Math.ceil(count * SAMPLE_STRIDE_SCALE / sampleStrideUnits);
   ensureScratch(sampledCapacity);
   const depths = scratchDepths;
   const keys = scratchKeys;
@@ -126,17 +211,42 @@ function sort(data) {
     : null;
   const far = Number(data.far) || DEFAULT_FAR;
   const cullToFrustum = data.cullToFrustum !== false;
+  const enableDepthSorting = data.enableDepthSorting === true;
   let minDepth = Infinity;
   let maxDepth = -Infinity;
   let visibleCount = 0;
   // Preserve the same source-index sample set for every camera direction while
   // avoiding depth work for points that the renderer will not draw.
-  for (let index = 0; index < count; index += sampleStride) {
+  for (let sample = 0; sample < sampledCapacity; sample += 1) {
+    const intervalStart = Math.floor(
+      sample * sampleStrideUnits / SAMPLE_STRIDE_SCALE,
+    );
+    const intervalEnd = Math.min(
+      count,
+      Math.floor((sample + 1) * sampleStrideUnits / SAMPLE_STRIDE_SCALE),
+    );
+    const intervalSize = Math.max(1, intervalEnd - intervalStart);
+    const stableHash = Math.imul(sample + 1, 0x9e3779b1) >>> 0;
+    const index = intervalStart + (stableHash % intervalSize);
+    if (index >= count) break;
     const offset = index * 3;
-    const relativeX = centers[offset] - position[0];
-    const relativeY = centers[offset + 1] - position[1];
-    const relativeZ = centers[offset + 2] - position[2];
-    const depth = relativeX * forward[0] + relativeY * forward[1] + relativeZ * forward[2];
+    const centerX = quantized
+      ? mins[0] + quantized[offset] * scales[0]
+      : centers[offset];
+    const centerY = quantized
+      ? mins[1] + quantized[offset + 1] * scales[1]
+      : centers[offset + 1];
+    const centerZ = quantized
+      ? mins[2] + quantized[offset + 2] * scales[2]
+      : centers[offset + 2];
+    const relativeX = centerX - position[0];
+    const relativeY = centerY - position[1];
+    const relativeZ = centerZ - position[2];
+    // H5 defaults to radial ordering and only re-sorts after translation. It
+    // keeps an already clear view intact through pure camera rotations.
+    const depth = enableDepthSorting
+      ? relativeX * forward[0] + relativeY * forward[1] + relativeZ * forward[2]
+      : relativeX * relativeX + relativeY * relativeY + relativeZ * relativeZ;
     if (cullToFrustum) {
       const visibleNow = insideFrustum(
         relativeX,
@@ -163,11 +273,10 @@ function sort(data) {
 
   if (!visibleCount) {
     worker.postMessage({
-      type: 'sorted',
+      type: 'sorted-start',
       datasetId,
       generation: data.generation,
       requestId: data.requestId,
-      indexesBuffer: new Uint32Array(0).buffer,
       duration: Date.now() - data.startedAt,
       workerDuration: Date.now() - computeStartedAt,
       totalCount: count,
@@ -199,16 +308,47 @@ function sort(data) {
     result[offsets[key]] = index;
     offsets[key] += 1;
   }
+  pendingResults[datasetId] = {
+    generation: data.generation,
+    nextOffset: 0,
+    requestId: data.requestId,
+    result,
+  };
   worker.postMessage({
-    type: 'sorted',
+    type: 'sorted-start',
     datasetId,
     generation: data.generation,
     requestId: data.requestId,
-    indexesBuffer: result.buffer,
     duration: Date.now() - data.startedAt,
     workerDuration: Date.now() - computeStartedAt,
     totalCount: count,
     visibleCount,
+  });
+}
+
+function sendResultChunk(data) {
+  const pending = pendingResults[data.datasetId];
+  if (!pending
+    || pending.generation !== data.generation
+    || pending.requestId !== data.requestId) return;
+  const maxCount = Math.max(
+    1,
+    Math.min(65536, Math.floor(Number(data.maxCount) || 32768)),
+  );
+  const offset = pending.nextOffset;
+  const end = Math.min(pending.result.length, offset + maxCount);
+  const chunk = pending.result.slice(offset, end);
+  pending.nextOffset = end;
+  const done = end >= pending.result.length;
+  if (done) delete pendingResults[data.datasetId];
+  worker.postMessage({
+    type: 'sorted-chunk',
+    datasetId: data.datasetId,
+    generation: data.generation,
+    requestId: data.requestId,
+    offset,
+    indexesBuffer: chunk.buffer,
+    done,
   });
 }
 
@@ -218,6 +358,21 @@ worker.onMessage((event) => {
     : event;
   if (!data || !data.type) return;
   if (data.type === 'init') initialize(data);
+  else if (data.type === 'init-start') beginChunkedInitialization(data);
+  else if (data.type === 'init-chunk') appendInitializationChunk(data);
   else if (data.type === 'sort') sort(data);
-  else if (data.type === 'release') delete datasets[data.datasetId];
+  else if (data.type === 'result-chunk') sendResultChunk(data);
+  else if (data.type === 'discard-result') {
+    const pending = pendingResults[data.datasetId];
+    if (pending
+      && pending.generation === data.generation
+      && pending.requestId === data.requestId) {
+      delete pendingResults[data.datasetId];
+    }
+  }
+  else if (data.type === 'release') {
+    delete datasets[data.datasetId];
+    delete pendingInitializations[data.datasetId];
+    delete pendingResults[data.datasetId];
+  }
 });

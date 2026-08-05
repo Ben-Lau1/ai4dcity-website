@@ -12,8 +12,9 @@ const AVATAR_RUN_SPEED = 15;
 const GRAVITY = 18;
 const JUMP_SPEED = 6.2;
 const GROUND_CLEARANCE = 0.04;
+const CAMERA_GROUND_CLEARANCE = 0.3;
 const AVATAR_LOOK_HEIGHT = 1.75;
-const AVATAR_ENTRY_DISTANCE = 5;
+const ORBIT_AVATAR_ENTRY_DISTANCE = 5;
 const AVATAR_DEFAULT_HORIZONTAL_DISTANCE = 5.5;
 const AVATAR_DEFAULT_HEIGHT_OFFSET = 1.2;
 const AVATAR_DEFAULT_DISTANCE = Math.hypot(
@@ -24,13 +25,19 @@ const AVATAR_DEFAULT_PITCH = Math.atan2(
   AVATAR_DEFAULT_HEIGHT_OFFSET,
   AVATAR_DEFAULT_HORIZONTAL_DISTANCE,
 );
-const AVATAR_MIN_PITCH = -0.08;
+const AVATAR_MIN_PITCH = 0.02;
 const AVATAR_MAX_PITCH = 0.9;
+const FIRST_PERSON_MIN_PITCH = -1.15;
+const FIRST_PERSON_MAX_PITCH = 1.15;
+const ORBIT_MIN_PITCH = 0.02;
+const ORBIT_MAX_PITCH = 1.25;
 const MODE_SWITCH_FOCUS_DISTANCE = 5;
+const MODE_SWITCH_GROUND_TOLERANCE = 1.25;
 const GROUND_PATH_RADIUS = 45;
 const MAX_GROUND_SEGMENT = 45;
 const GROUND_FOLLOW_SPEED = 8;
 const MAX_GROUND_STEP_UP = 0.65;
+const MAX_GROUND_STEP_DOWN = 1.25;
 const UP = [0, 1, 0];
 
 function createTrajectoryGroundSampler(scene) {
@@ -97,10 +104,23 @@ function createCameraController(scene) {
 
   function sampleGround(position) {
     if (preciseGroundSampler) {
-      const precise = preciseGroundSampler(position);
+      const precise = preciseGroundSampler(position, groundY);
       if (precise !== null && precise !== undefined && Number.isFinite(precise)) return precise;
     }
     return sampleTrajectoryGround(position);
+  }
+
+  function keepCameraAboveGround(position, fallbackGround) {
+    const sampledGround = preciseGroundSampler
+      ? preciseGroundSampler(position, fallbackGround)
+      : null;
+    const surfaceY = sampledGround !== null && Number.isFinite(sampledGround)
+      ? sampledGround
+      : fallbackGround;
+    if (Number.isFinite(surfaceY)) {
+      position[1] = Math.max(position[1], surfaceY + CAMERA_GROUND_CLEARANCE);
+    }
+    return position;
   }
   const initialHeading = Math.atan2(initialDirection[0], initialDirection[2]);
   let actorHeading = initialHeading;
@@ -171,16 +191,24 @@ function createCameraController(scene) {
     const offsetY = position[1] - orbitTarget[1];
     const offsetZ = position[2] - orbitTarget[2];
     orbitHeading = Math.atan2(offsetX, offsetZ);
-    orbitPitch = Math.atan2(offsetY, Math.hypot(offsetX, offsetZ));
+    orbitPitch = clamp(
+      Math.atan2(offsetY, Math.hypot(offsetX, offsetZ)),
+      ORBIT_MIN_PITCH,
+      ORBIT_MAX_PITCH,
+    );
   }
 
   function setFirstPersonFromCamera(position, direction) {
     firstPerson = position.slice();
     const horizontal = horizontalDirection(direction, firstPersonHeading);
     firstPersonHeading = Math.atan2(horizontal[0], horizontal[2]);
-    firstPersonPitch = Math.atan2(
-      direction[1],
-      Math.max(Math.hypot(direction[0], direction[2]), 0.000001),
+    firstPersonPitch = clamp(
+      Math.atan2(
+        direction[1],
+        Math.max(Math.hypot(direction[0], direction[2]), 0.000001),
+      ),
+      FIRST_PERSON_MIN_PITCH,
+      FIRST_PERSON_MAX_PITCH,
     );
 
     const foot = [position[0], position[1] - EYE_HEIGHT, position[2]];
@@ -191,11 +219,49 @@ function createCameraController(scene) {
     actor = [position[0], groundY + GROUND_CLEARANCE, position[2]];
   }
 
+  function resolveModeSwitchGround(position, fallbackGround) {
+    const sampledGround = sampleGround(position);
+    if (sampledGround === null || !Number.isFinite(sampledGround)) return fallbackGround;
+    if (!Number.isFinite(fallbackGround)) return sampledGround;
+    return Math.abs(sampledGround - fallbackGround) <= MODE_SWITCH_GROUND_TOLERANCE
+      ? sampledGround
+      : fallbackGround;
+  }
+
+  function setFirstPersonFromAvatar(direction) {
+    const fallbackGround = actor[1] - GROUND_CLEARANCE;
+    groundY = resolveModeSwitchGround(actor, fallbackGround);
+    actor[1] = groundY + GROUND_CLEARANCE;
+    firstPerson = [actor[0], groundY + EYE_HEIGHT, actor[2]];
+    const horizontal = horizontalDirection(direction, avatarCameraHeading);
+    firstPersonHeading = Math.atan2(horizontal[0], horizontal[2]);
+    firstPersonPitch = clamp(
+      Math.atan2(
+        direction[1],
+        Math.max(Math.hypot(direction[0], direction[2]), 0.000001),
+      ),
+      FIRST_PERSON_MIN_PITCH,
+      FIRST_PERSON_MAX_PITCH,
+    );
+  }
+
+  function placeAvatarFromFirstPerson(direction) {
+    const foot = [firstPerson[0], firstPerson[1] - EYE_HEIGHT, firstPerson[2]];
+    groundY = resolveModeSwitchGround(foot, groundY);
+    actor = [firstPerson[0], groundY + GROUND_CLEARANCE, firstPerson[2]];
+    const forward = horizontalDirection(direction, firstPersonHeading);
+    const nextHeading = Math.atan2(forward[0], forward[2]);
+    actorHeading = nextHeading;
+    avatarCameraHeading = nextHeading;
+    avatarCameraPitch = AVATAR_DEFAULT_PITCH;
+    avatarCameraDistance = AVATAR_DEFAULT_DISTANCE;
+  }
+
   function placeAvatarFromCamera(position, direction) {
     const forward = horizontalDirection(direction, actorHeading);
     const nextHeading = Math.atan2(forward[0], forward[2]);
-    const actorX = position[0] + forward[0] * AVATAR_ENTRY_DISTANCE;
-    const actorZ = position[2] + forward[2] * AVATAR_ENTRY_DISTANCE;
+    const actorX = position[0] + forward[0] * ORBIT_AVATAR_ENTRY_DISTANCE;
+    const actorZ = position[2] + forward[2] * ORBIT_AVATAR_ENTRY_DISTANCE;
     const sampledGround = sampleGround([actorX, position[1] - EYE_HEIGHT, actorZ]);
     if (sampledGround !== null && Number.isFinite(sampledGround)) groundY = sampledGround;
 
@@ -210,7 +276,11 @@ function createCameraController(scene) {
       Math.hypot(horizontalDistance, heightOffset),
       0.001,
     );
-    avatarCameraPitch = Math.atan2(heightOffset, Math.max(horizontalDistance, 0.000001));
+    avatarCameraPitch = clamp(
+      Math.atan2(heightOffset, Math.max(horizontalDistance, 0.000001)),
+      AVATAR_MIN_PITCH,
+      AVATAR_MAX_PITCH,
+    );
   }
 
   function reset(newScene = scene) {
@@ -243,8 +313,14 @@ function createCameraController(scene) {
     const position = camera.position.slice();
     const direction = currentCameraDirection();
     if (nextMode === 'orbit') setOrbitFromCamera(position, direction);
-    if (nextMode === 'firstPerson') setFirstPersonFromCamera(position, direction);
-    if (nextMode === 'avatar') placeAvatarFromCamera(position, direction);
+    if (nextMode === 'firstPerson') {
+      if (mode === 'avatar') setFirstPersonFromAvatar(direction);
+      else setFirstPersonFromCamera(position, direction);
+    }
+    if (nextMode === 'avatar') {
+      if (mode === 'firstPerson') placeAvatarFromFirstPerson(direction);
+      else placeAvatarFromCamera(position, direction);
+    }
     mode = nextMode;
     movementX = 0;
     movementZ = 0;
@@ -256,7 +332,11 @@ function createCameraController(scene) {
   function addGesture(dx, dy, zoom) {
     if (mode === 'orbit') {
       orbitHeading -= (dx || 0) * 0.006;
-      orbitPitch = clamp(orbitPitch - (dy || 0) * 0.004, -0.1, 1.35);
+      orbitPitch = clamp(
+        orbitPitch - (dy || 0) * 0.004,
+        ORBIT_MIN_PITCH,
+        ORBIT_MAX_PITCH,
+      );
       orbitDistance = clamp(orbitDistance - (zoom || 0) * 0.02, 2, 400);
       return;
     }
@@ -270,7 +350,11 @@ function createCameraController(scene) {
       return;
     }
     firstPersonHeading -= (dx || 0) * 0.004;
-    firstPersonPitch = clamp(firstPersonPitch - (dy || 0) * 0.003, -1.45, 1.45);
+    firstPersonPitch = clamp(
+      firstPersonPitch - (dy || 0) * 0.003,
+      FIRST_PERSON_MIN_PITCH,
+      FIRST_PERSON_MAX_PITCH,
+    );
   }
 
   function setMovement(x, z, isSprinting) {
@@ -289,7 +373,11 @@ function createCameraController(scene) {
     const horizontal = horizontalDirection(direction, firstPersonHeading);
     const horizontalLength = Math.hypot(direction[0], direction[2]);
     firstPersonHeading = Math.atan2(horizontal[0], horizontal[2]);
-    firstPersonPitch = Math.atan2(direction[1], Math.max(horizontalLength, 0.000001));
+    firstPersonPitch = clamp(
+      Math.atan2(direction[1], Math.max(horizontalLength, 0.000001)),
+      FIRST_PERSON_MIN_PITCH,
+      FIRST_PERSON_MAX_PITCH,
+    );
     actorHeading = firstPersonHeading;
     avatarCameraHeading = firstPersonHeading;
     groundY = position[1] - EYE_HEIGHT;
@@ -309,26 +397,43 @@ function createCameraController(scene) {
   }
 
   function recenterView() {
-    if (mode !== 'avatar') return false;
-    avatarCameraHeading = actorHeading;
-    avatarCameraPitch = AVATAR_DEFAULT_PITCH;
-    avatarCameraDistance = AVATAR_DEFAULT_DISTANCE;
-    return true;
+    if (mode === 'avatar') {
+      avatarCameraHeading = actorHeading;
+      avatarCameraPitch = AVATAR_DEFAULT_PITCH;
+      avatarCameraDistance = AVATAR_DEFAULT_DISTANCE;
+      return true;
+    }
+    if (mode === 'firstPerson') {
+      firstPersonPitch = 0;
+      return true;
+    }
+    if (mode === 'orbit') {
+      orbitPitch = 0.45;
+      return true;
+    }
+    return false;
   }
 
   function updateVertical(position, dt) {
     const wasGrounded = position[1] <= groundY + GROUND_CLEARANCE + 0.08
       && Math.abs(verticalVelocity) < 0.05;
     let sampledGround = sampleGround(position);
+    const sampledDelta = sampledGround !== null && Number.isFinite(sampledGround)
+      ? sampledGround - groundY
+      : 0;
     if (wasGrounded
       && !jumpRequested
       && sampledGround !== null
       && Number.isFinite(sampledGround)
-      && sampledGround - groundY > MAX_GROUND_STEP_UP) {
+      && (sampledDelta > MAX_GROUND_STEP_UP || sampledDelta < -MAX_GROUND_STEP_DOWN)) {
       const trajectoryGround = sampleTrajectoryGround(position);
+      const trajectoryDelta = trajectoryGround !== null && Number.isFinite(trajectoryGround)
+        ? trajectoryGround - groundY
+        : 0;
       sampledGround = trajectoryGround !== null
         && Number.isFinite(trajectoryGround)
-        && trajectoryGround - groundY <= MAX_GROUND_STEP_UP
+        && trajectoryDelta <= MAX_GROUND_STEP_UP
+        && trajectoryDelta >= -MAX_GROUND_STEP_DOWN
         ? trajectoryGround
         : null;
     }
@@ -379,6 +484,7 @@ function createCameraController(scene) {
         orbitTarget[1] + Math.sin(orbitPitch) * orbitDistance,
         orbitTarget[2] + Math.cos(orbitHeading) * horizontal,
       ];
+      keepCameraAboveGround(position, orbitTarget[1] - 1);
       camera = {
         position,
         target: orbitTarget.slice(),
@@ -403,6 +509,7 @@ function createCameraController(scene) {
         target[1] + Math.sin(avatarCameraPitch) * avatarCameraDistance,
         actor[2] - forward[2] * horizontal,
       ];
+      keepCameraAboveGround(position, groundY);
       camera = {
         position,
         target,

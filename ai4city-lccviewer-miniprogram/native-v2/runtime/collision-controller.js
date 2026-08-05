@@ -9,6 +9,10 @@ const RETRY_DELAY_MS = 4000;
 const MAX_GROUND_DELTA = 6;
 const MIN_UP_NORMAL = 0.55;
 const MAX_GRID_CELLS_PER_TRIANGLE = 256;
+const PARSE_SLICE_BUDGET_MS = 4;
+const PATH_CORRIDOR_RADIUS = 24;
+const MAX_PATH_SEGMENT_LENGTH = 45;
+const PARSE_ABORTED = 'COLLISION_PARSE_ABORTED';
 
 const TYPES = {
   char: { bytes: 1, getter: 'getInt8' },
@@ -130,43 +134,40 @@ function triangleGround(triangles, index, x, z) {
   return a * ay + b * by + c * cy;
 }
 
-function parseCollisionPly(buffer) {
-  const bytes = new Uint8Array(buffer);
-  const view = new DataView(buffer);
-  const layout = parseLayout(bytes);
-  const vertices = new Float32Array(layout.vertexCount * 3);
-  for (let index = 0; index < layout.vertexCount; index += 1) {
-    const source = layout.dataOffset + index * layout.vertexStride;
-    const x = readScalar(view, source + layout.offsets.x.offset, layout.offsets.x.type);
-    const y = readScalar(view, source + layout.offsets.y.offset, layout.offsets.y.type);
-    const z = readScalar(view, source + layout.offsets.z.offset, layout.offsets.z.type);
-    const target = index * 3;
-    vertices[target] = -x;
-    vertices[target + 1] = z;
-    vertices[target + 2] = y;
-  }
+function createCollisionMesh(triangles, cells, globalTriangles, triangleCount) {
+  return {
+    triangleCount,
+    sampleGround(position, referenceY) {
+      const candidates = cells[gridKey(position[0], position[2])] || [];
+      const targetY = Number.isFinite(referenceY) ? referenceY : position[1];
+      let closest = null;
+      let closestDelta = Infinity;
+      const test = (index) => {
+        const y = triangleGround(triangles, index, position[0], position[2]);
+        if (y === null || !Number.isFinite(y)) return;
+        const delta = Math.abs(y - targetY);
+        if (delta > MAX_GROUND_DELTA) return;
+        if (delta < closestDelta - 0.0001
+          || (Math.abs(delta - closestDelta) <= 0.0001 && (closest === null || y > closest))) {
+          closest = y;
+          closestDelta = delta;
+        }
+      };
+      candidates.forEach(test);
+      globalTriangles.forEach(test);
+      return closest;
+    },
+  };
+}
 
-  const countInfo = typeInfo(layout.faceList.countType);
-  const indexInfo = typeInfo(layout.faceList.indexType);
-  const faceOffset = layout.dataOffset + layout.vertexCount * layout.vertexStride;
-  let cursor = faceOffset;
-  let totalTriangles = 0;
-  for (let face = 0; face < layout.faceCount; face += 1) {
-    if (cursor + countInfo.bytes > view.byteLength) throw new Error('PLY face buffer is incomplete');
-    const count = readScalar(view, cursor, layout.faceList.countType);
-    cursor += countInfo.bytes;
-    totalTriangles += Math.max(0, count - 2);
-    cursor += count * indexInfo.bytes;
-  }
-  if (cursor > view.byteLength) throw new Error('PLY face indexes are incomplete');
-
+function createTriangleAccumulator(vertices, vertexCount, totalTriangles) {
   const triangles = new Float32Array(totalTriangles * 9);
   const cells = Object.create(null);
   const globalTriangles = [];
   let triangleCount = 0;
 
   function addTriangle(first, second, third) {
-    if (first >= layout.vertexCount || second >= layout.vertexCount || third >= layout.vertexCount) return;
+    if (first >= vertexCount || second >= vertexCount || third >= vertexCount) return;
     const a = first * 3;
     const b = second * 3;
     const c = third * 3;
@@ -220,6 +221,61 @@ function parseCollisionPly(buffer) {
     triangleCount += 1;
   }
 
+  return {
+    addTriangle,
+    finish() {
+      return createCollisionMesh(triangles, cells, globalTriangles, triangleCount);
+    },
+  };
+}
+
+function nextParseSlice() {
+  return new Promise((resolve) => setTimeout(resolve, 0));
+}
+
+function assertParseContinues(shouldContinue) {
+  if (!shouldContinue || shouldContinue()) return;
+  const error = new Error('Collision mesh parse cancelled');
+  error.code = PARSE_ABORTED;
+  throw error;
+}
+
+function parseCollisionPly(buffer) {
+  const bytes = new Uint8Array(buffer);
+  const view = new DataView(buffer);
+  const layout = parseLayout(bytes);
+  const vertices = new Float32Array(layout.vertexCount * 3);
+  for (let index = 0; index < layout.vertexCount; index += 1) {
+    const source = layout.dataOffset + index * layout.vertexStride;
+    const x = readScalar(view, source + layout.offsets.x.offset, layout.offsets.x.type);
+    const y = readScalar(view, source + layout.offsets.y.offset, layout.offsets.y.type);
+    const z = readScalar(view, source + layout.offsets.z.offset, layout.offsets.z.type);
+    const target = index * 3;
+    vertices[target] = -x;
+    vertices[target + 1] = z;
+    vertices[target + 2] = y;
+  }
+
+  const countInfo = typeInfo(layout.faceList.countType);
+  const indexInfo = typeInfo(layout.faceList.indexType);
+  const faceOffset = layout.dataOffset + layout.vertexCount * layout.vertexStride;
+  let cursor = faceOffset;
+  let totalTriangles = 0;
+  for (let face = 0; face < layout.faceCount; face += 1) {
+    if (cursor + countInfo.bytes > view.byteLength) throw new Error('PLY face buffer is incomplete');
+    const count = readScalar(view, cursor, layout.faceList.countType);
+    cursor += countInfo.bytes;
+    totalTriangles += Math.max(0, count - 2);
+    cursor += count * indexInfo.bytes;
+  }
+  if (cursor > view.byteLength) throw new Error('PLY face indexes are incomplete');
+
+  const accumulator = createTriangleAccumulator(
+    vertices,
+    layout.vertexCount,
+    totalTriangles,
+  );
+
   cursor = faceOffset;
   for (let face = 0; face < layout.faceCount; face += 1) {
     const count = readScalar(view, cursor, layout.faceList.countType);
@@ -235,27 +291,94 @@ function parseCollisionPly(buffer) {
     for (let item = 2; item < count; item += 1) {
       const current = readScalar(view, cursor, layout.faceList.indexType);
       cursor += indexInfo.bytes;
-      addTriangle(first, previous, current);
+      accumulator.addTriangle(first, previous, current);
       previous = current;
     }
   }
 
-  return {
-    triangleCount,
-    sampleGround(position) {
-      const candidates = cells[gridKey(position[0], position[2])] || [];
-      let lowest = null;
-      const test = (index) => {
-        const y = triangleGround(triangles, index, position[0], position[2]);
-        if (y === null || !Number.isFinite(y)) return;
-        const delta = Math.abs(y - position[1]);
-        if (delta <= MAX_GROUND_DELTA && (lowest === null || y < lowest)) lowest = y;
-      };
-      candidates.forEach(test);
-      globalTriangles.forEach(test);
-      return lowest;
-    },
-  };
+  return accumulator.finish();
+}
+
+async function parseCollisionPlyAsync(buffer, options = {}) {
+  const shouldContinue = typeof options.shouldContinue === 'function'
+    ? options.shouldContinue
+    : null;
+  assertParseContinues(shouldContinue);
+  const bytes = new Uint8Array(buffer);
+  const view = new DataView(buffer);
+  const layout = parseLayout(bytes);
+  const vertices = new Float32Array(layout.vertexCount * 3);
+  let sliceStartedAt = Date.now();
+
+  for (let index = 0; index < layout.vertexCount; index += 1) {
+    const source = layout.dataOffset + index * layout.vertexStride;
+    const x = readScalar(view, source + layout.offsets.x.offset, layout.offsets.x.type);
+    const y = readScalar(view, source + layout.offsets.y.offset, layout.offsets.y.type);
+    const z = readScalar(view, source + layout.offsets.z.offset, layout.offsets.z.type);
+    const target = index * 3;
+    vertices[target] = -x;
+    vertices[target + 1] = z;
+    vertices[target + 2] = y;
+    if ((index & 1023) === 1023 && Date.now() - sliceStartedAt >= PARSE_SLICE_BUDGET_MS) {
+      assertParseContinues(shouldContinue);
+      await nextParseSlice();
+      assertParseContinues(shouldContinue);
+      sliceStartedAt = Date.now();
+    }
+  }
+
+  const countInfo = typeInfo(layout.faceList.countType);
+  const indexInfo = typeInfo(layout.faceList.indexType);
+  const faceOffset = layout.dataOffset + layout.vertexCount * layout.vertexStride;
+  let cursor = faceOffset;
+  let totalTriangles = 0;
+  for (let face = 0; face < layout.faceCount; face += 1) {
+    if (cursor + countInfo.bytes > view.byteLength) throw new Error('PLY face buffer is incomplete');
+    const count = readScalar(view, cursor, layout.faceList.countType);
+    cursor += countInfo.bytes;
+    totalTriangles += Math.max(0, count - 2);
+    cursor += count * indexInfo.bytes;
+    if ((face & 1023) === 1023 && Date.now() - sliceStartedAt >= PARSE_SLICE_BUDGET_MS) {
+      assertParseContinues(shouldContinue);
+      await nextParseSlice();
+      assertParseContinues(shouldContinue);
+      sliceStartedAt = Date.now();
+    }
+  }
+  if (cursor > view.byteLength) throw new Error('PLY face indexes are incomplete');
+
+  const accumulator = createTriangleAccumulator(
+    vertices,
+    layout.vertexCount,
+    totalTriangles,
+  );
+  cursor = faceOffset;
+  for (let face = 0; face < layout.faceCount; face += 1) {
+    const count = readScalar(view, cursor, layout.faceList.countType);
+    cursor += countInfo.bytes;
+    if (count < 3) {
+      cursor += count * indexInfo.bytes;
+    } else {
+      const first = readScalar(view, cursor, layout.faceList.indexType);
+      cursor += indexInfo.bytes;
+      let previous = readScalar(view, cursor, layout.faceList.indexType);
+      cursor += indexInfo.bytes;
+      for (let item = 2; item < count; item += 1) {
+        const current = readScalar(view, cursor, layout.faceList.indexType);
+        cursor += indexInfo.bytes;
+        accumulator.addTriangle(first, previous, current);
+        previous = current;
+      }
+    }
+    if ((face & 255) === 255 && Date.now() - sliceStartedAt >= PARSE_SLICE_BUDGET_MS) {
+      assertParseContinues(shouldContinue);
+      await nextParseSlice();
+      assertParseContinues(shouldContinue);
+      sliceStartedAt = Date.now();
+    }
+  }
+  assertParseContinues(shouldContinue);
+  return accumulator.finish();
 }
 
 function requestArrayBuffer(url) {
@@ -284,9 +407,59 @@ function distanceToBoundsSquaredXZ(position, bounds) {
   return dx * dx + dz * dz;
 }
 
+function buildTrajectoryCorridor(trajectory) {
+  const points = (trajectory || []).filter((point) => (
+    Array.isArray(point)
+    && point.length >= 3
+    && point.slice(0, 3).every(Number.isFinite)
+  )).map((point) => point.slice(0, 3));
+  const segments = [];
+  for (let index = 1; index < points.length; index += 1) {
+    const start = points[index - 1];
+    const end = points[index];
+    const dx = end[0] - start[0];
+    const dz = end[2] - start[2];
+    const lengthSq = dx * dx + dz * dz;
+    if (lengthSq > 0.0001
+      && lengthSq <= MAX_PATH_SEGMENT_LENGTH * MAX_PATH_SEGMENT_LENGTH) {
+      segments.push({ dx, dz, end, lengthSq, start });
+    }
+  }
+  return { points, segments };
+}
+
+function isWithinTrajectoryCorridor(
+  corridor,
+  position,
+  radius = PATH_CORRIDOR_RADIUS,
+) {
+  if (!corridor || !position) return false;
+  const radiusSq = Math.max(0, Number(radius) || 0) ** 2;
+  for (let index = 0; index < corridor.segments.length; index += 1) {
+    const segment = corridor.segments[index];
+    const relativeX = position[0] - segment.start[0];
+    const relativeZ = position[2] - segment.start[2];
+    const ratio = Math.max(0, Math.min(
+      1,
+      (relativeX * segment.dx + relativeZ * segment.dz) / segment.lengthSq,
+    ));
+    const dx = position[0] - (segment.start[0] + segment.dx * ratio);
+    const dz = position[2] - (segment.start[2] + segment.dz * ratio);
+    if (dx * dx + dz * dz <= radiusSq) return true;
+  }
+  for (let index = 0; index < corridor.points.length; index += 1) {
+    const dx = position[0] - corridor.points[index][0];
+    const dz = position[2] - corridor.points[index][2];
+    if (dx * dx + dz * dz <= radiusSq) return true;
+  }
+  return false;
+}
+
 class CollisionController {
   constructor(scene, callbacks = {}) {
     this.nodes = (scene.collision && scene.collision.nodes) || [];
+    this.pathCorridor = buildTrajectoryCorridor(scene.trajectory);
+    this.pathGroundActive = false;
     this.onError = callbacks.onError || null;
     this.onReady = callbacks.onReady || null;
     this.states = {};
@@ -305,6 +478,11 @@ class CollisionController {
     if (!force && !moved && now - this.lastUpdateAt < UPDATE_INTERVAL_MS) return;
     this.lastUpdateAt = now;
     this.lastPosition = position.slice();
+    this.pathGroundActive = isWithinTrajectoryCorridor(this.pathCorridor, position);
+    if (this.pathGroundActive) {
+      this.desiredIds.clear();
+      return;
+    }
     const candidates = this.nodes.map((node) => ({
       node,
       distanceSq: distanceToBoundsSquaredXZ(position, node.bounds),
@@ -346,19 +524,33 @@ class CollisionController {
     this.states[node.id] = state;
     this.loading = true;
     requestArrayBuffer(node.url)
-      .then((buffer) => new Promise((resolve, reject) => {
-        setTimeout(() => {
-          try { resolve(parseCollisionPly(buffer)); } catch (error) { reject(error); }
-        }, 0);
-      }))
+      .then((buffer) => {
+        if (this.disposed
+          || this.states[node.id] !== state
+          || !this.desiredIds.has(node.id)) {
+          if (this.states[node.id] === state) delete this.states[node.id];
+          return null;
+        }
+        return parseCollisionPlyAsync(buffer, {
+          shouldContinue: () => (
+            !this.disposed
+            && this.states[node.id] === state
+            && this.desiredIds.has(node.id)
+          ),
+        });
+      })
       .then((mesh) => {
-        if (this.disposed || this.states[node.id] !== state) return;
+        if (!mesh || this.disposed || this.states[node.id] !== state) return;
         state.mesh = mesh;
         state.lastUsedAt = Date.now();
         if (this.onReady) this.onReady(node, mesh.triangleCount);
       })
       .catch((error) => {
         if (this.disposed || this.states[node.id] !== state) return;
+        if (error && error.code === PARSE_ABORTED) {
+          delete this.states[node.id];
+          return;
+        }
         state.failed = true;
         state.retryAt = Date.now() + RETRY_DELAY_MS;
         if (this.onError) this.onError(error);
@@ -373,16 +565,24 @@ class CollisionController {
       });
   }
 
-  sampleGround(position) {
+  sampleGround(position, referenceY) {
     if (this.disposed || !position) return null;
-    let lowest = null;
+    if (this.pathGroundActive) return null;
+    const targetY = Number.isFinite(referenceY) ? referenceY : position[1];
+    let closest = null;
+    let closestDelta = Infinity;
     Object.values(this.states).forEach((state) => {
       if (!state.mesh) return;
-      const y = state.mesh.sampleGround(position);
+      const y = state.mesh.sampleGround(position, targetY);
       if (y === null || !Number.isFinite(y)) return;
-      if (lowest === null || y < lowest) lowest = y;
+      const delta = Math.abs(y - targetY);
+      if (delta < closestDelta - 0.0001
+        || (Math.abs(delta - closestDelta) <= 0.0001 && (closest === null || y > closest))) {
+        closest = y;
+        closestDelta = delta;
+      }
     });
-    return lowest;
+    return closest;
   }
 
   evict() {
@@ -407,4 +607,10 @@ class CollisionController {
   }
 }
 
-module.exports = { CollisionController, parseCollisionPly };
+module.exports = {
+  CollisionController,
+  buildTrajectoryCorridor,
+  isWithinTrajectoryCorridor,
+  parseCollisionPly,
+  parseCollisionPlyAsync,
+};

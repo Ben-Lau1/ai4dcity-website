@@ -251,6 +251,10 @@ button::after {
   padding: 4rpx 14rpx 8rpx;
 }
 
+.scene-list {
+  max-height: 46vh;
+}
+
 .scene-item {
   align-items: center;
   background: transparent;
